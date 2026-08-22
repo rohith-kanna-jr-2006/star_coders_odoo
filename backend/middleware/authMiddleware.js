@@ -1,56 +1,71 @@
 import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 
-/**
- * Protects routes by validating Bearer JWT and attaching authenticated user
- */
 export const protect = async (req, res, next) => {
-  let token
+  const authHeader = req.headers.authorization
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    token = req.headers.authorization.split(' ')[1]
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({
+      success: false,
+      message: 'Unauthorized: token missing or invalid format',
+    })
   }
+
+  const token = authHeader.split(' ')[1]
 
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Access denied. No authentication token provided.',
+      message: 'Unauthorized: token missing',
     })
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-    // Retrieve active user from database using decoded ID
+    if (!decoded || !decoded.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized: invalid token payload',
+      })
+    }
+
     const user = await User.findById(decoded.id).select('-password')
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'The user belonging to this token no longer exists.',
+        message: 'Unauthorized: user not found',
       })
     }
 
     if (user.status === 'inactive') {
       return res.status(403).json({
         success: false,
-        message: 'Your account is deactivated. Please contact HR.',
+        message: 'Access denied: account inactive',
       })
     }
 
-    // Attach authenticated identity to request object
-    req.user = user
-    next()
+    req.user = {
+      id: user._id.toString(),
+      role: user.role,
+      employeeId: user.employeeId,
+      name: user.name,
+      email: user.email,
+    }
+
+    return next()
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
-        message: 'Session expired. Please sign in again.',
+        message: 'Unauthorized: token expired',
       })
     }
+
     return res.status(401).json({
       success: false,
-      message: 'Invalid or malformed authentication token.',
+      message: 'Unauthorized: invalid token',
     })
   }
 }

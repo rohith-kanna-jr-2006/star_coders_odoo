@@ -1,55 +1,47 @@
 import Leave from '../models/Leave.js'
 
-/**
- * @desc    Apply for leave (Employee)
- * @route   POST /api/leaves
- * @access  Private (Employee)
- */
 export const applyLeave = async (req, res, next) => {
   try {
-    const { leaveType, startDate, endDate, reason, remarks } = req.body
+    const { leaveType, startDate, endDate, reason } = req.body
 
-    // 1. Validate required fields
     if (!leaveType || !startDate || !endDate) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide leaveType, startDate, and endDate.',
+        message: 'leaveType, startDate and endDate are required',
       })
     }
 
-    // 2. Validate date logic
     const start = new Date(startDate)
     const end = new Date(endDate)
 
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid date format provided.',
+        message: 'Invalid date provided',
       })
     }
 
     if (end < start) {
       return res.status(400).json({
         success: false,
-        message: 'End date cannot be before start date.',
+        message: 'endDate must be greater than or equal to startDate',
       })
     }
 
-    // 3. Create leave request strictly with server-controlled defaults
     const leave = await Leave.create({
-      user: req.user._id,
+      user: req.user.id,
       employeeId: req.user.employeeId,
       employeeName: req.user.name,
       leaveType,
-      startDate: String(startDate).slice(0, 10),
-      endDate: String(endDate).slice(0, 10),
-      reason: reason || remarks || '',
-      status: 'Pending', // Enforced server-side
+      startDate: startDate.toString().slice(0, 10),
+      endDate: endDate.toString().slice(0, 10),
+      reason: reason || '',
+      status: 'Pending',
     })
 
     return res.status(201).json({
       success: true,
-      message: 'Leave request submitted successfully.',
+      message: 'Leave applied successfully',
       data: leave,
     })
   } catch (error) {
@@ -57,41 +49,13 @@ export const applyLeave = async (req, res, next) => {
   }
 }
 
-/**
- * @desc    Get leave requests for authenticated employee only
- * @route   GET /api/leaves
- * @access  Private (Employee)
- */
 export const getEmployeeLeaves = async (req, res, next) => {
   try {
-    const leaves = await Leave.find({ user: req.user._id }).sort({ createdAt: -1 })
+    const leaves = await Leave.find({ user: req.user.id }).sort({ createdAt: -1 })
 
     return res.status(200).json({
       success: true,
-      message: 'Leave requests retrieved successfully.',
-      data: {
-        leaves,
-      },
-    })
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * @desc    Get all leave requests across the company (HR / Admin)
- * @route   GET /api/hr/leaves
- * @access  Private (HR, Admin)
- */
-export const getHrLeaves = async (req, res, next) => {
-  try {
-    const leaves = await Leave.find()
-      .populate('user', 'name email department designation')
-      .sort({ createdAt: -1 })
-
-    return res.status(200).json({
-      success: true,
-      message: 'All company leave requests retrieved successfully.',
+      message: 'Leave history retrieved successfully',
       data: leaves,
     })
   } catch (error) {
@@ -99,11 +63,20 @@ export const getHrLeaves = async (req, res, next) => {
   }
 }
 
-/**
- * @desc    Approve an employee leave request (HR / Admin)
- * @route   PUT /api/hr/leaves/:id/approve
- * @access  Private (HR, Admin)
- */
+export const getHrLeaves = async (req, res, next) => {
+  try {
+    const leaves = await Leave.find().populate('user', 'name email employeeId role').sort({ createdAt: -1 })
+
+    return res.status(200).json({
+      success: true,
+      message: 'Leave requests retrieved successfully',
+      data: leaves,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const approveLeave = async (req, res, next) => {
   try {
     const leave = await Leave.findById(req.params.id)
@@ -111,20 +84,19 @@ export const approveLeave = async (req, res, next) => {
     if (!leave) {
       return res.status(404).json({
         success: false,
-        message: 'Leave request not found.',
+        message: 'Leave request not found',
       })
     }
 
-    // Security check: Employee cannot approve their own leave
-    if (String(leave.user) === String(req.user._id)) {
-      return res.status(403).json({
+    if (leave.status !== 'Pending') {
+      return res.status(409).json({
         success: false,
-        message: 'You cannot approve your own leave request.',
+        message: 'Leave request is not pending',
       })
     }
 
     leave.status = 'Approved'
-    leave.approvedBy = req.user._id
+    leave.approvedBy = req.user.id
     leave.approvedAt = new Date()
     leave.rejectionReason = ''
 
@@ -132,7 +104,7 @@ export const approveLeave = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Leave request approved successfully.',
+      message: 'Leave approved successfully',
       data: leave,
     })
   } catch (error) {
@@ -140,11 +112,6 @@ export const approveLeave = async (req, res, next) => {
   }
 }
 
-/**
- * @desc    Reject an employee leave request (HR / Admin)
- * @route   PUT /api/hr/leaves/:id/reject
- * @access  Private (HR, Admin)
- */
 export const rejectLeave = async (req, res, next) => {
   try {
     const { rejectionReason } = req.body
@@ -153,28 +120,27 @@ export const rejectLeave = async (req, res, next) => {
     if (!leave) {
       return res.status(404).json({
         success: false,
-        message: 'Leave request not found.',
+        message: 'Leave request not found',
       })
     }
 
-    // Security check: Employee cannot reject their own leave
-    if (String(leave.user) === String(req.user._id)) {
-      return res.status(403).json({
+    if (leave.status !== 'Pending') {
+      return res.status(409).json({
         success: false,
-        message: 'You cannot reject your own leave request.',
+        message: 'Leave request is not pending',
       })
     }
 
     leave.status = 'Rejected'
-    leave.rejectionReason = rejectionReason ? String(rejectionReason).trim() : 'Not specified'
-    leave.approvedBy = req.user._id
+    leave.rejectionReason = rejectionReason || 'Not specified'
+    leave.approvedBy = req.user.id
     leave.approvedAt = new Date()
 
     await leave.save()
 
     return res.status(200).json({
       success: true,
-      message: 'Leave request rejected.',
+      message: 'Leave rejected successfully',
       data: leave,
     })
   } catch (error) {

@@ -1,23 +1,19 @@
 import User from '../models/User.js'
 
-/**
- * @desc    Get current authenticated employee profile
- * @route   GET /api/profile
- * @access  Private (Employee, HR, Admin)
- */
 export const getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id).select('-password')
+    const user = await User.findById(req.user.id).select('-password')
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Employee profile not found.',
+        message: 'Profile not found',
       })
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Profile retrieved successfully.',
+      message: 'Profile retrieved successfully',
       data: user,
     })
   } catch (error) {
@@ -25,36 +21,41 @@ export const getProfile = async (req, res, next) => {
   }
 }
 
-/**
- * @desc    Update editable fields of current authenticated employee profile
- * @route   PUT /api/profile
- * @access  Private (Employee, HR, Admin)
- */
 export const updateProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id)
+    const user = await User.findById(req.user.id)
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Employee profile not found.',
+        message: 'Profile not found',
       })
     }
 
-    // Strictly whitelist editable fields only
-    const { phone, address, profilePicture } = req.body
+    const allowedFields = ['phone', 'address']
+    const updates = {}
 
-    if (phone !== undefined) user.phone = String(phone).trim()
-    if (address !== undefined) user.address = String(address).trim()
-    if (profilePicture !== undefined) user.profilePicture = String(profilePicture).trim()
+    allowedFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+        updates[field] = req.body[field]
+      }
+    })
 
-    // Note: Any incoming changes to employeeId, email, role, department, designation, salary, status are explicitly ignored
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid profile fields provided',
+      })
+    }
+
+    Object.assign(user, updates)
     await user.save()
 
     const updatedUser = await User.findById(user._id).select('-password')
 
     return res.status(200).json({
       success: true,
-      message: 'Profile updated successfully.',
+      message: 'Profile updated successfully',
       data: updatedUser,
     })
   } catch (error) {

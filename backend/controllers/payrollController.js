@@ -1,62 +1,13 @@
 import Payroll from '../models/Payroll.js'
 import User from '../models/User.js'
 
-/**
- * @desc    Get authenticated employee's payroll details (Read-Only)
- * @route   GET /api/payroll
- * @access  Private (Employee)
- */
 export const getEmployeePayroll = async (req, res, next) => {
   try {
-    // Find latest payroll record for the authenticated employee
-    const payroll = await Payroll.findOne({ user: req.user._id }).sort({ year: -1, createdAt: -1 })
-
-    if (!payroll) {
-      // If no specific historical payroll generated, return standard template
-      return res.status(200).json({
-        success: true,
-        message: 'Payroll details retrieved.',
-        data: {
-          payroll: {
-            employeeId: req.user.employeeId,
-            employeeName: req.user.name,
-            basicSalary: 50000,
-            allowances: 15000,
-            deductions: 5000,
-            netSalary: 60000,
-            month: 'Current',
-            year: new Date().getFullYear(),
-          },
-        },
-      })
-    }
+    const payrolls = await Payroll.find({ user: req.user.id }).sort({ year: -1, month: -1 })
 
     return res.status(200).json({
       success: true,
-      message: 'Payroll details retrieved successfully.',
-      data: {
-        payroll,
-      },
-    })
-  } catch (error) {
-    next(error)
-  }
-}
-
-/**
- * @desc    Get all employee payroll records (HR / Admin)
- * @route   GET /api/hr/payroll
- * @access  Private (HR, Admin)
- */
-export const getHrPayroll = async (req, res, next) => {
-  try {
-    const payrolls = await Payroll.find()
-      .populate('user', 'name email department designation employeeId')
-      .sort({ year: -1, createdAt: -1 })
-
-    return res.status(200).json({
-      success: true,
-      message: 'Company payroll records retrieved.',
+      message: 'Payroll retrieved successfully',
       data: payrolls,
     })
   } catch (error) {
@@ -64,51 +15,122 @@ export const getHrPayroll = async (req, res, next) => {
   }
 }
 
-/**
- * @desc    Create or update employee payroll record (HR / Admin)
- * @route   POST /api/hr/payroll or PUT /api/hr/payroll/:id
- * @access  Private (HR, Admin)
- */
+export const getHrPayroll = async (req, res, next) => {
+  try {
+    const payrolls = await Payroll.find().populate('user', 'name email employeeId department').sort({ year: -1, month: -1 })
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payroll records retrieved successfully',
+      data: payrolls,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const createOrUpdatePayroll = async (req, res, next) => {
   try {
-    const { employeeId, basicSalary, allowances, deductions, month, year } = req.body
+    const { employeeId, basicSalary, allowances = 0, deductions = 0, month, year } = req.body
 
-    if (!employeeId || basicSalary === undefined || !month || !year) {
+    if (req.params.id) {
+      const payroll = await Payroll.findById(req.params.id)
+      if (!payroll) {
+        return res.status(404).json({
+          success: false,
+          message: 'Payroll record not found',
+        })
+      }
+
+      const parsedBasic = Number(basicSalary ?? payroll.basicSalary)
+      const parsedAllowances = Number(allowances ?? payroll.allowances)
+      const parsedDeductions = Number(deductions ?? payroll.deductions)
+      const parsedMonth = Number(month ?? payroll.month)
+      const parsedYear = Number(year ?? payroll.year)
+
+      if (parsedBasic < 0 || parsedAllowances < 0 || parsedDeductions < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Salary values cannot be negative',
+        })
+      }
+
+      if (parsedMonth < 1 || parsedMonth > 12) {
+        return res.status(400).json({
+          success: false,
+          message: 'Month must be between 1 and 12',
+        })
+      }
+
+      if (!parsedYear || parsedYear < 2000) {
+        return res.status(400).json({
+          success: false,
+          message: 'Year is invalid',
+        })
+      }
+
+      payroll.basicSalary = parsedBasic
+      payroll.allowances = parsedAllowances
+      payroll.deductions = parsedDeductions
+      payroll.month = parsedMonth
+      payroll.year = parsedYear
+      payroll.netSalary = parsedBasic + parsedAllowances - parsedDeductions
+
+      await payroll.save()
+
+      return res.status(200).json({
+        success: true,
+        message: 'Payroll updated successfully',
+        data: payroll,
+      })
+    }
+
+    if (!employeeId || basicSalary === undefined || month === undefined || year === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide employeeId, basicSalary, month, and year.',
+        message: 'employeeId, basicSalary, month and year are required',
       })
     }
 
     const parsedBasic = Number(basicSalary)
-    const parsedAllowances = Number(allowances || 0)
-    const parsedDeductions = Number(deductions || 0)
+    const parsedAllowances = Number(allowances)
+    const parsedDeductions = Number(deductions)
+    const parsedMonth = Number(month)
+    const parsedYear = Number(year)
 
     if (parsedBasic < 0 || parsedAllowances < 0 || parsedDeductions < 0) {
       return res.status(400).json({
         success: false,
-        message: 'Salary amounts cannot be negative.',
+        message: 'Salary values cannot be negative',
       })
     }
 
-    // Verify employee exists
+    if (parsedMonth < 1 || parsedMonth > 12) {
+      return res.status(400).json({
+        success: false,
+        message: 'Month must be between 1 and 12',
+      })
+    }
+
+    if (!parsedYear || parsedYear < 2000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Year is invalid',
+      })
+    }
+
     const employee = await User.findOne({ employeeId: employeeId.toUpperCase().trim() })
     if (!employee) {
       return res.status(404).json({
         success: false,
-        message: `Employee with ID '${employeeId}' was not found.`,
+        message: 'Employee not found',
       })
     }
 
-    // Server calculates net salary
     const netSalary = parsedBasic + parsedAllowances - parsedDeductions
 
     const payroll = await Payroll.findOneAndUpdate(
-      {
-        user: employee._id,
-        month: String(month).trim(),
-        year: Number(year),
-      },
+      { user: employee._id, month: parsedMonth, year: parsedYear },
       {
         user: employee._id,
         employeeId: employee.employeeId,
@@ -117,19 +139,15 @@ export const createOrUpdatePayroll = async (req, res, next) => {
         allowances: parsedAllowances,
         deductions: parsedDeductions,
         netSalary,
-        month: String(month).trim(),
-        year: Number(year),
+        month: parsedMonth,
+        year: parsedYear,
       },
-      {
-        new: true,
-        upsert: true,
-        runValidators: true,
-      }
+      { new: true, upsert: true, runValidators: true }
     )
 
     return res.status(200).json({
       success: true,
-      message: 'Payroll record saved successfully.',
+      message: 'Payroll saved successfully',
       data: payroll,
     })
   } catch (error) {

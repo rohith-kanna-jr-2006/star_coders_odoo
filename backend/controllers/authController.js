@@ -1,105 +1,88 @@
 import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 
-/**
- * Helper to generate signed JWT token with user ID and role
- */
 const generateToken = (user) => {
   return jwt.sign(
     {
-      id: user._id,
-      employeeId: user.employeeId,
+      id: user._id.toString(),
       role: user.role,
     },
     process.env.JWT_SECRET,
-    {
-      expiresIn: '7d',
-    }
+    { expiresIn: '7d' }
   )
 }
 
-/**
- * @desc    Register a new user / employee
- * @route   POST /api/auth/signup
- * @access  Public
- */
 export const signup = async (req, res, next) => {
   try {
-    const { employeeId, name, email, password, role, department, designation, phone, address } = req.body
+    const { employeeId, name, email, password, role } = req.body
 
-    // 1. Required field validations
     if (!employeeId || !name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide employeeId, name, email, and password.',
+        message: 'employeeId, name, email and password are required',
+      })
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailPattern.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid email address',
       })
     }
 
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters long.',
+        message: 'Password must be at least 6 characters long',
       })
     }
 
-    // 2. Check for duplicate email
-    const emailExists = await User.findOne({ email: email.toLowerCase().trim() })
-    if (emailExists) {
-      return res.status(409).json({
-        success: false,
-        message: 'An account with this email address already exists.',
-      })
-    }
+    const cleanedEmail = email.toLowerCase().trim()
+    const cleanedEmployeeId = employeeId.toUpperCase().trim()
+    const normalizedRole = role ? role.toLowerCase().trim() : 'employee'
+    const allowedPublicRoles = ['employee']
 
-    // 3. Check for duplicate employeeId
-    const employeeIdExists = await User.findOne({ employeeId: employeeId.toUpperCase().trim() })
-    if (employeeIdExists) {
-      return res.status(409).json({
-        success: false,
-        message: `Employee ID '${employeeId.toUpperCase()}' is already registered.`,
-      })
-    }
-
-    // 4. Validate role if provided
-    const validRoles = ['employee', 'hr', 'admin']
-    const assignedRole = role ? role.toLowerCase().trim() : 'employee'
-    if (!validRoles.includes(assignedRole)) {
+    if (!allowedPublicRoles.includes(normalizedRole)) {
       return res.status(400).json({
         success: false,
-        message: `Invalid role specified. Supported roles: ${validRoles.join(', ')}`,
+        message: 'Public signup is limited to employee accounts. Contact HR to create HR or admin accounts.',
       })
     }
 
-    // 5. Create user record (Password hashing handled automatically by User pre-save hook)
-    const user = await User.create({
-      employeeId: employeeId.toUpperCase().trim(),
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      password,
-      role: assignedRole,
-      department: department || 'General',
-      designation: designation || 'Employee',
-      phone: phone || '',
-      address: address || '',
-    })
+    const existingEmail = await User.findOne({ email: cleanedEmail })
+    if (existingEmail) {
+      return res.status(409).json({
+        success: false,
+        message: 'Email already registered',
+      })
+    }
 
-    // 6. Generate authentication token
-    const token = generateToken(user)
+    const existingEmployeeId = await User.findOne({ employeeId: cleanedEmployeeId })
+    if (existingEmployeeId) {
+      return res.status(409).json({
+        success: false,
+        message: 'Employee ID already registered',
+      })
+    }
+
+    const user = await User.create({
+      employeeId: cleanedEmployeeId,
+      name: name.trim(),
+      email: cleanedEmail,
+      password,
+      role: 'employee',
+    })
 
     return res.status(201).json({
       success: true,
-      message: 'Account registered successfully.',
+      message: 'Signup successful',
       data: {
-        token,
         user: {
-          id: user._id,
           employeeId: user.employeeId,
           name: user.name,
           email: user.email,
           role: user.role,
-          department: user.department,
-          designation: user.designation,
-          status: user.status,
         },
       },
     })
@@ -108,69 +91,54 @@ export const signup = async (req, res, next) => {
   }
 }
 
-/**
- * @desc    Authenticate user and return JWT
- * @route   POST /api/auth/login
- * @access  Public
- */
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body
 
-    // 1. Validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide both email and password.',
+        message: 'Email and password are required',
       })
     }
 
-    // 2. Find user including password field for verification
     const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password')
+
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.',
+        message: 'Invalid credentials',
       })
     }
 
-    // 3. Verify password hash using bcrypt
     const isMatch = await user.matchPassword(password)
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.',
+        message: 'Invalid credentials',
       })
     }
 
-    // 4. Verify account status
     if (user.status === 'inactive') {
       return res.status(403).json({
         success: false,
-        message: 'Your account is deactivated. Please contact HR.',
+        message: 'Account inactive',
       })
     }
 
-    // 5. Generate token
     const token = generateToken(user)
 
     return res.status(200).json({
       success: true,
-      message: 'Login successful.',
+      message: 'Login successful',
       data: {
         token,
         user: {
-          id: user._id,
+          id: user._id.toString(),
           employeeId: user.employeeId,
           name: user.name,
           email: user.email,
           role: user.role,
-          department: user.department,
-          designation: user.designation,
-          phone: user.phone,
-          address: user.address,
-          profilePicture: user.profilePicture,
-          status: user.status,
         },
       },
     })
