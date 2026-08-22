@@ -6,32 +6,40 @@ import Loading from '../../components/Loading';
 import ErrorMessage from '../../components/ErrorMessage';
 import { getProfile, updateProfile } from '../../services/profileService';
 import { getApiError } from '../../services/api';
+
 const unwrap = result => result?.profile || result?.data?.profile || result?.data || result || {};
+const departmentOptions = ['Engineering', 'Design', 'Product', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations', 'General'];
+
 export default function Profile() {
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({
     phone: '',
     address: '',
+    department: '',
     profilePicture: ''
   });
+
   const [state, setState] = useState({
     loading: true,
     saving: false,
     error: '',
     message: ''
   });
+
   const load = async () => {
     setState({
       ...state,
       loading: true,
       error: ''
     });
+
     try {
       const next = unwrap(await getProfile());
       setProfile(next);
       setForm({
         phone: next.phone || '',
         address: next.address || '',
+        department: next.department || '',
         profilePicture: next.profilePicture || next.profileImage || ''
       });
     } catch (err) {
@@ -42,14 +50,17 @@ export default function Profile() {
       });
       return;
     }
+
     setState({
       ...state,
       loading: false
     });
   };
+
   useEffect(() => {
     load();
   }, []);
+
   const save = async event => {
     event.preventDefault();
     setState({
@@ -58,6 +69,7 @@ export default function Profile() {
       message: '',
       error: ''
     });
+
     try {
       const next = unwrap(await updateProfile(form));
       setProfile(next || {
@@ -77,73 +89,98 @@ export default function Profile() {
       });
     }
   };
+
   if (state.loading) return /*#__PURE__*/React.createElement(Loading, {
     label: "Loading profile..."
   });
+
   if (state.error && !profile) return /*#__PURE__*/React.createElement(ErrorMessage, {
     message: state.error,
     onRetry: load
   });
-  const readOnly = [['Employee ID', profile.employeeId || profile.id], ['Email', profile.email], ['Department', profile.department], ['Designation', profile.designation], ['Joining date', profile.joiningDate || profile.joinedAt]];
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(PageHeader, {
-    eyebrow: "MY PROFILE",
-    title: "Profile",
-    description: "Your identity at Dayflow, all in one place."
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "profile-grid"
-  }, /*#__PURE__*/React.createElement("section", {
-    className: "section-card profile-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "profile-hero"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "avatar large"
-  }, (profile.name || profile.fullName || 'E').slice(0, 1)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", null, profile.name || profile.fullName || 'Employee'), /*#__PURE__*/React.createElement("p", null, profile.designation || 'Employee'))), /*#__PURE__*/React.createElement("div", {
-    className: "eyebrow profile-label"
-  }, "PERSONAL DETAILS"), /*#__PURE__*/React.createElement("form", {
-    onSubmit: save,
-    className: "form-stack"
-  }, /*#__PURE__*/React.createElement("label", null, "Phone", /*#__PURE__*/React.createElement("input", {
-    value: form.phone,
-    onChange: e => setForm({
-      ...form,
-      phone: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("label", null, "Address", /*#__PURE__*/React.createElement("textarea", {
-    rows: "3",
-    value: form.address,
-    onChange: e => setForm({
-      ...form,
-      address: e.target.value
-    })
-  })), /*#__PURE__*/React.createElement("label", null, "Profile picture URL", /*#__PURE__*/React.createElement("input", {
-    value: form.profilePicture,
-    onChange: e => setForm({
-      ...form,
-      profilePicture: e.target.value
+
+  const readOnly = [
+    ['Employee ID', profile.employeeId || profile.id],
+    ['Email', profile.email],
+    ['Role', profile.role],
+    ['Department', profile.department],
+    ['Designation', profile.designation],
+    ['Joining date', profile.joiningDate || profile.joinedAt]
+  ];
+
+  return /*#__PURE__*/React.createElement(React.Fragment, null,
+    /*#__PURE__*/React.createElement(PageHeader, {
+      eyebrow: "MY PROFILE",
+      title: "Profile",
+      description: "Your identity at Dayflow, all in one place."
     }),
-    placeholder: "https://..."
-  })), state.error && /*#__PURE__*/React.createElement("div", {
-    className: "form-error"
-  }, state.error), state.message && /*#__PURE__*/React.createElement("div", {
-    className: "form-success"
-  }, state.message), /*#__PURE__*/React.createElement("button", {
-    className: "primary-button",
-    disabled: state.saving
-  }, /*#__PURE__*/React.createElement(Save, {
-    size: 16
-  }), state.saving ? 'Saving...' : 'Save changes'))), /*#__PURE__*/React.createElement("section", {
-    className: "section-card"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "eyebrow"
-  }, "EMPLOYMENT DETAILS"), /*#__PURE__*/React.createElement("h2", {
-    className: "card-title"
-  }, "Read-only information"), /*#__PURE__*/React.createElement("div", {
-    className: "detail-list"
-  }, readOnly.map(([label, value]) => /*#__PURE__*/React.createElement("div", {
-    key: label
-  }, /*#__PURE__*/React.createElement("span", null, label), /*#__PURE__*/React.createElement("strong", null, value || '-')))), /*#__PURE__*/React.createElement("div", {
-    className: "eyebrow profile-label"
-  }, "SALARY"), /*#__PURE__*/React.createElement("div", {
-    className: "salary-readonly"
-  }, /*#__PURE__*/React.createElement("span", null, "Current salary structure"), /*#__PURE__*/React.createElement("strong", null, profile.salary?.netSalary || profile.salary || 'Available through payroll')))));
+    /*#__PURE__*/React.createElement("div", { className: "profile-grid" },
+      /*#__PURE__*/React.createElement("section", { className: "section-card profile-card" },
+        /*#__PURE__*/React.createElement("div", { className: "profile-hero" },
+          /*#__PURE__*/React.createElement("div", { className: "avatar large" }, (profile.name || profile.fullName || 'E').slice(0, 1)),
+          /*#__PURE__*/React.createElement("div", null,
+            /*#__PURE__*/React.createElement("h2", null, profile.name || profile.fullName || 'Employee'),
+            /*#__PURE__*/React.createElement("p", null, profile.designation || 'Employee')
+          )
+        ),
+        /*#__PURE__*/React.createElement("div", { className: "eyebrow profile-label" }, "PERSONAL DETAILS"),
+        /*#__PURE__*/React.createElement("form", { onSubmit: save, className: "form-stack" },
+          /*#__PURE__*/React.createElement("label", null,
+            "Phone",
+            /*#__PURE__*/React.createElement("input", {
+              value: form.phone,
+              onChange: e => setForm({ ...form, phone: e.target.value })
+            })
+          ),
+          /*#__PURE__*/React.createElement("label", null,
+            "Address",
+            /*#__PURE__*/React.createElement("textarea", {
+              rows: "3",
+              value: form.address,
+              onChange: e => setForm({ ...form, address: e.target.value })
+            })
+          ),
+          /*#__PURE__*/React.createElement("label", null,
+            "Department",
+            /*#__PURE__*/React.createElement("select", {
+              value: form.department,
+              onChange: e => setForm({ ...form, department: e.target.value })
+            },
+              /*#__PURE__*/React.createElement("option", { value: "" }, "Select department"),
+              departmentOptions.map(dept => /*#__PURE__*/React.createElement("option", { key: dept, value: dept }, dept))
+            )
+          ),
+          /*#__PURE__*/React.createElement("label", null,
+            "Profile picture URL",
+            /*#__PURE__*/React.createElement("input", {
+              value: form.profilePicture,
+              onChange: e => setForm({ ...form, profilePicture: e.target.value }),
+              placeholder: "https://..."
+            })
+          ),
+          state.error && /*#__PURE__*/React.createElement("div", { className: "form-error" }, state.error),
+          state.message && /*#__PURE__*/React.createElement("div", { className: "form-success" }, state.message),
+          /*#__PURE__*/React.createElement("button", { className: "primary-button", disabled: state.saving },
+            /*#__PURE__*/React.createElement(Save, { size: 16 }),
+            state.saving ? 'Saving...' : 'Save changes'
+          )
+        )
+      ),
+      /*#__PURE__*/React.createElement("section", { className: "section-card" },
+        /*#__PURE__*/React.createElement("div", { className: "eyebrow" }, "EMPLOYMENT DETAILS"),
+        /*#__PURE__*/React.createElement("h2", { className: "card-title" }, "Read-only information"),
+        /*#__PURE__*/React.createElement("div", { className: "detail-list" },
+          readOnly.map(([label, value]) => /*#__PURE__*/React.createElement("div", { key: label },
+            /*#__PURE__*/React.createElement("span", null, label),
+            /*#__PURE__*/React.createElement("strong", null, value || '-')
+          ))
+        ),
+        /*#__PURE__*/React.createElement("div", { className: "eyebrow profile-label" }, "SALARY"),
+        /*#__PURE__*/React.createElement("div", { className: "salary-readonly" },
+          /*#__PURE__*/React.createElement("span", null, "Current salary structure"),
+          /*#__PURE__*/React.createElement("strong", null, profile.salary?.netSalary || profile.salary || 'Available through payroll')
+        )
+      )
+    )
+  );
 }

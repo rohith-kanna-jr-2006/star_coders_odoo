@@ -44,8 +44,8 @@ export const updateProfile = async (req, res, next) => {
       })
     }
 
-    // Whitelist only editable profile fields for ordinary employees
-    const { phone, address, profilePicture, profilePictureUrl } = req.body
+    // Whitelist editable profile fields for ordinary employees
+    const { phone, address, profilePicture, profilePictureUrl, department } = req.body
 
     let updated = false
 
@@ -57,6 +57,10 @@ export const updateProfile = async (req, res, next) => {
       user.address = String(address).trim()
       updated = true
     }
+    if (department !== undefined) {
+      user.department = String(department).trim() || 'General'
+      updated = true
+    }
 
     const newPicture = profilePictureUrl !== undefined ? profilePictureUrl : profilePicture
     if (newPicture !== undefined) {
@@ -64,7 +68,6 @@ export const updateProfile = async (req, res, next) => {
       updated = true
     }
 
-    // Note: Fields like role, employeeId, email, salary, status, department, designation are strictly protected and ignored here
     if (updated) {
       await user.save()
     }
