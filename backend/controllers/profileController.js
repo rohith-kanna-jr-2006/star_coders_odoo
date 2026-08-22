@@ -1,13 +1,19 @@
 import User from '../models/User.js'
 
+/**
+ * @desc    Get profile for currently authenticated user
+ * @route   GET /api/profile
+ * @access  Private (Employee, HR, Admin)
+ */
 export const getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select('-password')
+    const userId = req.user._id || req.user.id
+    const user = await User.findById(userId).select('-password')
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Profile not found',
+        message: 'Employee profile not found.',
       })
     }
 
@@ -21,35 +27,47 @@ export const getProfile = async (req, res, next) => {
   }
 }
 
+/**
+ * @desc    Update editable fields of current employee profile
+ * @route   PUT /api/profile
+ * @access  Private (Employee, HR, Admin)
+ */
 export const updateProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id)
+    const userId = req.user._id || req.user.id
+    const user = await User.findById(userId)
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'Profile not found',
+        message: 'Employee profile not found.',
       })
     }
 
-    const allowedFields = ['phone', 'address']
-    const updates = {}
+    // Whitelist only editable profile fields for ordinary employees
+    const { phone, address, profilePicture, profilePictureUrl } = req.body
 
-    allowedFields.forEach((field) => {
-      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
-        updates[field] = req.body[field]
-      }
-    })
+    let updated = false
 
-    if (Object.keys(updates).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No valid profile fields provided',
-      })
+    if (phone !== undefined) {
+      user.phone = String(phone).trim()
+      updated = true
+    }
+    if (address !== undefined) {
+      user.address = String(address).trim()
+      updated = true
     }
 
-    Object.assign(user, updates)
-    await user.save()
+    const newPicture = profilePictureUrl !== undefined ? profilePictureUrl : profilePicture
+    if (newPicture !== undefined) {
+      user.profilePicture = String(newPicture).trim()
+      updated = true
+    }
+
+    // Note: Fields like role, employeeId, email, salary, status, department, designation are strictly protected and ignored here
+    if (updated) {
+      await user.save()
+    }
 
     const updatedUser = await User.findById(user._id).select('-password')
 

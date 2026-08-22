@@ -83,13 +83,12 @@ const userSchema = new mongoose.Schema(
 )
 
 // Pre-save hook: Hash plain-text password with bcrypt
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('password')) {
-    return next()
+    return
   }
   const salt = await bcrypt.genSalt(10)
   this.password = await bcrypt.hash(this.password, salt)
-  next()
 })
 
 // Instance method: Compare input password with stored password hash
@@ -100,6 +99,7 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 // Transform output to remove password hash and internal mongoose versioning
 userSchema.methods.toJSON = function () {
   const obj = this.toObject()
+  obj.profilePictureUrl = obj.profilePictureUrl || obj.profilePicture || ''
   delete obj.password
   delete obj.__v
   return obj

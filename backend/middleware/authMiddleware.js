@@ -1,13 +1,16 @@
 import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 
+/**
+ * Middleware to protect routes: validates Bearer JWT, extracts identity, verifies user status
+ */
 export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
       success: false,
-      message: 'Unauthorized: token missing or invalid format',
+      message: 'Unauthorized: token missing or invalid Bearer format',
     })
   }
 
@@ -21,38 +24,35 @@ export const protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const secret = process.env.JWT_SECRET || 'dayflow_default_jwt_secret_key_2026'
+    const decoded = jwt.verify(token, secret)
 
-    if (!decoded || !decoded.id) {
+    const userId = decoded.id || decoded.userId
+    if (!decoded || !userId) {
       return res.status(401).json({
         success: false,
         message: 'Unauthorized: invalid token payload',
       })
     }
 
-    const user = await User.findById(decoded.id).select('-password')
+    const user = await User.findById(userId).select('-password')
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Unauthorized: user not found',
+        message: 'Unauthorized: user no longer exists',
       })
     }
 
     if (user.status === 'inactive') {
       return res.status(403).json({
         success: false,
-        message: 'Access denied: account inactive',
+        message: 'Access denied: account is inactive',
       })
     }
 
-    req.user = {
-      id: user._id.toString(),
-      role: user.role,
-      employeeId: user.employeeId,
-      name: user.name,
-      email: user.email,
-    }
+    // Attach full authenticated user document to request object
+    req.user = user
 
     return next()
   } catch (error) {

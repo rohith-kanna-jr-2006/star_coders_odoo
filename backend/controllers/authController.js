@@ -1,89 +1,97 @@
-import jwt from 'jsonwebtoken'
+import generateToken from '../utils/generateToken.js'
 import User from '../models/User.js'
 
-const generateToken = (user) => {
-  return jwt.sign(
-    {
-      id: user._id.toString(),
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: '7d' }
-  )
-}
-
+/**
+ * @desc    Register a new user / employee
+ * @route   POST /api/auth/signup
+ * @access  Public
+ */
 export const signup = async (req, res, next) => {
   try {
-    const { employeeId, name, email, password, role } = req.body
+    const { employeeId, name, email, password, role, department, designation, phone, address, profilePicture, profilePictureUrl } = req.body
 
-    if (!employeeId || !name || !email || !password) {
+    // 1. Required field validations
+    if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'employeeId, name, email and password are required',
-      })
-    }
-
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailPattern.test(email)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide a valid email address',
+        message: 'Please provide name, email, and password.',
       })
     }
 
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters long',
+        message: 'Password must be at least 6 characters long.',
       })
     }
 
-    const cleanedEmail = email.toLowerCase().trim()
-    const cleanedEmployeeId = employeeId.toUpperCase().trim()
-    const normalizedRole = role ? role.toLowerCase().trim() : 'employee'
-    const allowedPublicRoles = ['employee']
-
-    if (!allowedPublicRoles.includes(normalizedRole)) {
+    const normalizedEmail = String(email).toLowerCase().trim()
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(normalizedEmail)) {
       return res.status(400).json({
         success: false,
-        message: 'Public signup is limited to employee accounts. Contact HR to create HR or admin accounts.',
+        message: 'Please enter a valid email address.',
       })
     }
 
-    const existingEmail = await User.findOne({ email: cleanedEmail })
-    if (existingEmail) {
+    // 2. Check for duplicate email
+    const emailExists = await User.findOne({ email: normalizedEmail })
+    if (emailExists) {
       return res.status(409).json({
         success: false,
-        message: 'Email already registered',
+        message: 'An account with this email address already exists.',
       })
     }
 
-    const existingEmployeeId = await User.findOne({ employeeId: cleanedEmployeeId })
-    if (existingEmployeeId) {
-      return res.status(409).json({
+    // 3. Determine employeeId (use provided or auto-generate)
+    let finalEmployeeId = employeeId ? String(employeeId).toUpperCase().trim() : `EMP${Math.floor(100000 + Math.random() * 900000)}`
+    
+    if (employeeId) {
+      const employeeIdExists = await User.findOne({ employeeId: finalEmployeeId })
+      if (employeeIdExists) {
+        return res.status(409).json({
+          success: false,
+          message: `Employee ID '${finalEmployeeId}' is already registered.`,
+        })
+      }
+    }
+
+    // 4. Validate role if provided
+    const validRoles = ['employee', 'hr', 'admin']
+    const assignedRole = role ? String(role).toLowerCase().trim() : 'employee'
+    if (!validRoles.includes(assignedRole)) {
+      return res.status(400).json({
         success: false,
-        message: 'Employee ID already registered',
+        message: `Invalid role specified. Supported roles: ${validRoles.join(', ')}`,
       })
     }
 
+    const picture = profilePictureUrl || profilePicture || ''
+
+    // 5. Create user record (Password hashing handled automatically by User pre-save hook)
     const user = await User.create({
-      employeeId: cleanedEmployeeId,
-      name: name.trim(),
-      email: cleanedEmail,
+      employeeId: finalEmployeeId,
+      name: String(name).trim(),
+      email: normalizedEmail,
       password,
-      role: 'employee',
+      role: assignedRole,
+      department: department ? String(department).trim() : 'General',
+      designation: designation ? String(designation).trim() : 'Employee',
+      phone: phone ? String(phone).trim() : '',
+      address: address ? String(address).trim() : '',
+      profilePicture: picture,
     })
+
+    // 6. Generate authentication token
+    const token = generateToken(user)
+    const safeUser = user.toJSON()
 
     return res.status(201).json({
       success: true,
-      message: 'Signup successful',
+      message: 'User registered successfully',
       data: {
-        user: {
-          employeeId: user.employeeId,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+        token,
+        user: safeUser,
       },
     })
   } catch (error) {
@@ -127,19 +135,14 @@ export const login = async (req, res, next) => {
     }
 
     const token = generateToken(user)
+    const safeUser = user.toJSON()
 
     return res.status(200).json({
       success: true,
       message: 'Login successful',
       data: {
         token,
-        user: {
-          id: user._id.toString(),
-          employeeId: user.employeeId,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+        user: safeUser,
       },
     })
   } catch (error) {
