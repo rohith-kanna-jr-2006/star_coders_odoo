@@ -51,3 +51,14 @@ export const rejectLeave = async (id, comment) => {
     }, 500);
   });
 };
+
+export const updateLeaveStatus = async (id, status, comment = 'Status updated by Admin') => {
+  if (status === 'Approved') {
+    return approveLeave(id, comment);
+  } else if (status === 'Rejected') {
+    return rejectLeave(id, comment);
+  } else {
+    return Promise.reject(new Error("Invalid status update"));
+  }
+};
+
