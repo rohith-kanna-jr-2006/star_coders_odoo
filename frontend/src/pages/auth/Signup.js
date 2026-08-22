@@ -8,6 +8,7 @@ export default function Signup() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     employeeId: '',
+    name: '',
     email: '',
     password: '',
     role: 'Employee',
@@ -68,7 +69,12 @@ export default function Signup() {
   }, "Your people team can help with your employee ID."), /*#__PURE__*/React.createElement("form", {
     onSubmit: submit,
     className: "form-stack two-col"
-  }, /*#__PURE__*/React.createElement("label", null, "Employee ID", /*#__PURE__*/React.createElement("input", {
+  }, /*#__PURE__*/React.createElement("label", null, "Full name", /*#__PURE__*/React.createElement("input", {
+    placeholder: "Your full name",
+    autoComplete: "name",
+    value: form.name,
+    onChange: e => update('name', e.target.value)
+  })), /*#__PURE__*/React.createElement("label", null, "Employee ID", /*#__PURE__*/React.createElement("input", {
     placeholder: "EMP-0000",
     value: form.employeeId,
     onChange: e => update('employeeId', e.target.value)
