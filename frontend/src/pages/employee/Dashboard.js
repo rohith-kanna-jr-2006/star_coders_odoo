@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, CalendarCheck, Clock3, FileText, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -45,7 +45,7 @@ export default function Dashboard() {
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(PageHeader, {
     eyebrow: "OVERVIEW",
     title: `Good morning, ${name.split(' ')[0]}.`,
-    description: "Hereâ€™s the shape of your workday."
+    description: "Here's the shape of your workday."
   }), loading ? /*#__PURE__*/React.createElement(Loading, {
     label: "Loading your workspace..."
   }) : error ? /*#__PURE__*/React.createElement(ErrorMessage, {
@@ -59,7 +59,7 @@ export default function Dashboard() {
     className: "metric-icon"
   }, /*#__PURE__*/React.createElement(Clock3, {
     size: 19
-  })), /*#__PURE__*/React.createElement("span", null, "Todayâ€™s status"), /*#__PURE__*/React.createElement("strong", null, today.status || 'Not recorded'), /*#__PURE__*/React.createElement("small", null, today.checkIn || today.checkInTime ? `In at ${today.checkIn || today.checkInTime}` : 'No check-in yet')), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("span", null, "Today's status"), /*#__PURE__*/React.createElement("strong", null, today.status || 'Not recorded'), /*#__PURE__*/React.createElement("small", null, today.checkIn || today.checkInTime ? `In at ${today.checkIn || today.checkInTime}` : 'No check-in yet')), /*#__PURE__*/React.createElement("div", {
     className: "metric-card"
   }, /*#__PURE__*/React.createElement("div", {
     className: "metric-icon green"
@@ -71,7 +71,7 @@ export default function Dashboard() {
     className: "metric-icon blue"
   }, /*#__PURE__*/React.createElement(UserRound, {
     size: 19
-  })), /*#__PURE__*/React.createElement("span", null, "Employee ID"), /*#__PURE__*/React.createElement("strong", null, user?.employeeId || user?.id || 'â€”'), /*#__PURE__*/React.createElement("small", null, "Active employee"))), /*#__PURE__*/React.createElement("section", {
+  })), /*#__PURE__*/React.createElement("span", null, "Employee ID"), /*#__PURE__*/React.createElement("strong", null, user?.employeeId || user?.id || '-'), /*#__PURE__*/React.createElement("small", null, "Active employee"))), /*#__PURE__*/React.createElement("section", {
     className: "dashboard-grid"
   }, /*#__PURE__*/React.createElement("div", {
     className: "section-card"
@@ -109,7 +109,7 @@ export default function Dashboard() {
     status: today.status || 'Not recorded'
   })), /*#__PURE__*/React.createElement("div", {
     className: "time-row"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Check-in"), /*#__PURE__*/React.createElement("strong", null, today.checkIn || today.checkInTime || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Check-out"), /*#__PURE__*/React.createElement("strong", null, today.checkOut || today.checkOutTime || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Hours"), /*#__PURE__*/React.createElement("strong", null, today.workingHours || today.hours || 'â€”'))), /*#__PURE__*/React.createElement(Link, {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Check-in"), /*#__PURE__*/React.createElement("strong", null, today.checkIn || today.checkInTime || '-')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Check-out"), /*#__PURE__*/React.createElement("strong", null, today.checkOut || today.checkOutTime || '-')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Hours"), /*#__PURE__*/React.createElement("strong", null, today.workingHours || today.hours || '-'))), /*#__PURE__*/React.createElement(Link, {
     className: "card-link",
     to: "/employee/attendance"
   }, "Open attendance ", /*#__PURE__*/React.createElement(ArrowUpRight, {

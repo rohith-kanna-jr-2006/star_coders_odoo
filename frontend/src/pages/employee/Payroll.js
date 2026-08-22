@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { CircleDollarSign, Download } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
@@ -32,7 +32,7 @@ export default function Payroll() {
     message: error,
     onRetry: load
   });
-  const money = value => value === undefined || value === null || value === '' ? 'â€”' : value;
+  const money = value => value === undefined || value === null || value === '' ? '-' : value;
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(PageHeader, {
     eyebrow: "COMPENSATION",
     title: "Payroll",
@@ -57,5 +57,5 @@ export default function Payroll() {
     size: 16
   }), " Download")), /*#__PURE__*/React.createElement("div", {
     className: "payroll-details"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Employee"), /*#__PURE__*/React.createElement("strong", null, payroll?.employeeName || payroll?.name || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Employee ID"), /*#__PURE__*/React.createElement("strong", null, payroll?.employeeId || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Basic salary"), /*#__PURE__*/React.createElement("strong", null, money(payroll?.basicSalary || payroll?.basic_salary))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Allowances"), /*#__PURE__*/React.createElement("strong", null, money(payroll?.allowances))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Deductions"), /*#__PURE__*/React.createElement("strong", null, money(payroll?.deductions))))));
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Employee"), /*#__PURE__*/React.createElement("strong", null, payroll?.employeeName || payroll?.name || '-')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Employee ID"), /*#__PURE__*/React.createElement("strong", null, payroll?.employeeId || '-')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Basic salary"), /*#__PURE__*/React.createElement("strong", null, money(payroll?.basicSalary || payroll?.basic_salary))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Allowances"), /*#__PURE__*/React.createElement("strong", null, money(payroll?.allowances))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Deductions"), /*#__PURE__*/React.createElement("strong", null, money(payroll?.deductions))))));
 }

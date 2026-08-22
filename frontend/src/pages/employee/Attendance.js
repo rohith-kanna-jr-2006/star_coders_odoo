@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { CalendarDays, Check, ChevronLeft, ChevronRight, Clock3 } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
@@ -62,7 +62,7 @@ export default function Attendance() {
     className: "attendance-hero"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "eyebrow"
-  }, "TODAYâ€™S ATTENDANCE"), /*#__PURE__*/React.createElement("h2", null, data?.date || new Date().toLocaleDateString()), /*#__PURE__*/React.createElement("div", {
+  }, "TODAY'S ATTENDANCE"), /*#__PURE__*/React.createElement("h2", null, data?.date || new Date().toLocaleDateString()), /*#__PURE__*/React.createElement("div", {
     className: "attendance-status"
   }, /*#__PURE__*/React.createElement(StatusBadge, {
     status: data?.status || 'Not recorded'
@@ -86,11 +86,11 @@ export default function Attendance() {
     className: "time-row large-time"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement(Clock3, {
     size: 14
-  }), " Check-in"), /*#__PURE__*/React.createElement("strong", null, data?.checkIn || data?.checkInTime || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement(Clock3, {
+  }), " Check-in"), /*#__PURE__*/React.createElement("strong", null, data?.checkIn || data?.checkInTime || '-')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement(Clock3, {
     size: 14
-  }), " Check-out"), /*#__PURE__*/React.createElement("strong", null, data?.checkOut || data?.checkOutTime || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement(CalendarDays, {
+  }), " Check-out"), /*#__PURE__*/React.createElement("strong", null, data?.checkOut || data?.checkOutTime || '-')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement(CalendarDays, {
     size: 14
-  }), " Working hours"), /*#__PURE__*/React.createElement("strong", null, data?.workingHours || data?.hours || 'â€”'))), /*#__PURE__*/React.createElement("section", {
+  }), " Working hours"), /*#__PURE__*/React.createElement("strong", null, data?.workingHours || data?.hours || '-'))), /*#__PURE__*/React.createElement("section", {
     className: "section-card"
   }, /*#__PURE__*/React.createElement("div", {
     className: "card-heading"
@@ -112,7 +112,7 @@ export default function Attendance() {
     className: "table-scroll"
   }, /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Date"), /*#__PURE__*/React.createElement("th", null, "Check-in"), /*#__PURE__*/React.createElement("th", null, "Check-out"), /*#__PURE__*/React.createElement("th", null, "Status"))), /*#__PURE__*/React.createElement("tbody", null, rows.length ? rows.map((row, index) => /*#__PURE__*/React.createElement("tr", {
     key: row._id || row.id || index
-  }, /*#__PURE__*/React.createElement("td", null, row.date || row.day || 'â€”'), /*#__PURE__*/React.createElement("td", null, row.checkIn || row.checkInTime || 'â€”'), /*#__PURE__*/React.createElement("td", null, row.checkOut || row.checkOutTime || 'â€”'), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusBadge, {
+  }, /*#__PURE__*/React.createElement("td", null, row.date || row.day || '-'), /*#__PURE__*/React.createElement("td", null, row.checkIn || row.checkInTime || '-'), /*#__PURE__*/React.createElement("td", null, row.checkOut || row.checkOutTime || '-'), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusBadge, {
     status: row.status
   })))) : /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
     colSpan: "4",
