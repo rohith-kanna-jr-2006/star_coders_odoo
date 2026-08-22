@@ -1,35 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { getPayrolls } from '../../services/payrollService';
+import { getPayrollRecords } from '../../services/payrollService';
+import FilterBar from '../../components/admin/FilterBar';
+import StatusBadge from '../../components/admin/StatusBadge';
+import Modal from '../../components/admin/Modal';
+import { notify } from '../../components/admin/Notification';
 
 const Payroll = () => {
-  const [payrolls, setPayrolls] = useState([]);
+  const [records, setRecords] = useState([]);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  
+  const [generateModal, setGenerateModal] = useState(null);
+
+  const fetchRecords = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await getPayrollRecords();
+      let data = res.data || [];
+      
+      if (search) {
+        data = data.filter(r => r.employeeName.toLowerCase().includes(search.toLowerCase()) || r.employeeId.includes(search));
+      }
+      if (status) {
+        data = data.filter(r => r.status === status);
+      }
+      
+      setRecords(data);
+    } catch (err) {
+      setError('Unable to load payroll data.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPayrolls = async () => {
-      try {
-        setLoading(true);
-        const res = await getPayrolls();
-        setPayrolls(res.data);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load payroll records.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPayrolls();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchRecords();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, status]);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(amount);
+  const handleReset = () => {
+    setSearch('');
+    setStatus('');
+  };
+
+  const confirmGenerate = () => {
+    if (!generateModal) return;
+    notify(`Payslip generated for ${generateModal.employeeName}`, 'success');
+    setGenerateModal(null);
+    // Real implementation would call API
+    fetchRecords();
   };
 
   return React.createElement(
@@ -37,12 +62,42 @@ const Payroll = () => {
     { className: 'page' },
     React.createElement('h1', { className: 'page-title' }, 'Payroll Management'),
     
-    error ? React.createElement('div', { className: 'error-state' }, error) : null,
-    
-    loading ? React.createElement('div', { className: 'loading-state' }, 'Loading payroll data...') : 
+    React.createElement(
+      FilterBar,
+      { searchPlaceholder: 'Search employee...', searchValue: search, onSearchChange: setSearch },
       React.createElement(
         'div',
-        { className: 'table-container card', style: { border: '1px solid #ddd', borderRadius: '8px', overflowX: 'auto' } },
+        { className: 'form-group', style: { flex: '1 1 150px' } },
+        React.createElement('label', null, 'Status:'),
+        React.createElement(
+          'select',
+          { className: 'form-control', value: status, onChange: e => setStatus(e.target.value) },
+          React.createElement('option', { value: '' }, 'All Status'),
+          React.createElement('option', { value: 'Paid' }, 'Paid'),
+          React.createElement('option', { value: 'Pending' }, 'Pending')
+        )
+      ),
+      React.createElement(
+        'div',
+        { style: { display: 'flex', gap: '10px', marginTop: 'auto', marginBottom: '15px' } },
+        React.createElement('button', { className: 'btn btn-secondary', onClick: handleReset }, 'Reset')
+      )
+    ),
+
+    error && React.createElement(
+      'div',
+      { className: 'error-state' },
+      React.createElement('p', null, error),
+      React.createElement('button', { className: 'btn btn-primary', onClick: fetchRecords }, 'Retry')
+    ),
+    
+    !error && loading && React.createElement('div', { className: 'loading-state' }, 'Loading payroll...'),
+    
+    !error && !loading && (records.length === 0 ? 
+      React.createElement('div', { className: 'empty-state card', style: { padding: '20px', textAlign: 'center', border: '1px solid var(--border)' } }, 'No payroll records found.') : 
+      React.createElement(
+        'div',
+        { className: 'table-container' },
         React.createElement(
           'table',
           { className: 'data-table', style: { width: '100%', textAlign: 'left', borderCollapse: 'collapse' } },
@@ -52,49 +107,67 @@ const Payroll = () => {
             React.createElement(
               'tr',
               null,
-              React.createElement('th', { style: { borderBottom: '2px solid #ddd', padding: '12px' } }, 'Employee ID'),
-              React.createElement('th', { style: { borderBottom: '2px solid #ddd', padding: '12px' } }, 'Name'),
-              React.createElement('th', { style: { borderBottom: '2px solid #ddd', padding: '12px' } }, 'Department'),
-              React.createElement('th', { style: { borderBottom: '2px solid #ddd', padding: '12px' } }, 'Basic Salary'),
-              React.createElement('th', { style: { borderBottom: '2px solid #ddd', padding: '12px' } }, 'Net Salary'),
-              React.createElement('th', { style: { borderBottom: '2px solid #ddd', padding: '12px' } }, 'Action')
+              React.createElement('th', null, 'Employee ID'),
+              React.createElement('th', null, 'Name'),
+              React.createElement('th', null, 'Basic Salary'),
+              React.createElement('th', null, 'Allowances'),
+              React.createElement('th', null, 'Deductions'),
+              React.createElement('th', null, 'Net Salary'),
+              React.createElement('th', null, 'Status'),
+              React.createElement('th', null, 'Actions')
             )
           ),
           React.createElement(
             'tbody',
             null,
-            payrolls.length > 0
-              ? payrolls.map(payroll =>
+            records.map(record =>
+              React.createElement(
+                'tr',
+                { key: record.id },
+                React.createElement('td', null, record.employeeId),
+                React.createElement('td', null, record.employeeName),
+                React.createElement('td', null, `$${record.basicSalary}`),
+                React.createElement('td', null, `$${record.allowances}`),
+                React.createElement('td', null, `$${record.deductions}`),
+                React.createElement('td', null, React.createElement('strong', null, `$${record.netSalary}`)),
+                React.createElement('td', null, React.createElement(StatusBadge, { status: record.status })),
+                React.createElement(
+                  'td',
+                  null,
                   React.createElement(
-                    'tr',
-                    { key: payroll.employeeId },
-                    React.createElement('td', { style: { borderBottom: '1px solid #eee', padding: '12px' } }, payroll.employeeId),
-                    React.createElement('td', { style: { borderBottom: '1px solid #eee', padding: '12px' } }, payroll.employeeName),
-                    React.createElement('td', { style: { borderBottom: '1px solid #eee', padding: '12px' } }, payroll.department),
-                    React.createElement('td', { style: { borderBottom: '1px solid #eee', padding: '12px' } }, formatCurrency(payroll.basicSalary)),
-                    React.createElement('td', { style: { borderBottom: '1px solid #eee', padding: '12px', fontWeight: 'bold' } }, formatCurrency(payroll.netSalary)),
-                    React.createElement(
-                      'td',
-                      { style: { borderBottom: '1px solid #eee', padding: '12px' } },
-                      React.createElement(
-                        'button',
-                        { 
-                          onClick: () => navigate(`/admin/payroll/${payroll.employeeId}`),
-                          style: { cursor: 'pointer', padding: '4px 8px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }
-                        },
-                        'Details'
-                      )
-                    )
+                    'button',
+                    { 
+                      className: 'btn btn-primary',
+                      onClick: () => setGenerateModal(record)
+                    },
+                    record.status === 'Paid' ? 'View Payslip' : 'Generate Payslip'
                   )
                 )
-              : React.createElement(
-                  'tr',
-                  null,
-                  React.createElement('td', { colSpan: 6, style: { padding: '12px', textAlign: 'center' } }, 'No payroll records available.')
-                )
+              )
+            )
           )
         )
       )
+    ),
+
+    generateModal && React.createElement(
+      Modal,
+      {
+        title: generateModal.status === 'Paid' ? 'View Payslip' : 'Generate Payslip',
+        onClose: () => setGenerateModal(null),
+        footer: [
+          React.createElement('button', { key: 'cancel', className: 'btn btn-secondary', onClick: () => setGenerateModal(null) }, 'Close'),
+          generateModal.status !== 'Paid' && React.createElement('button', { key: 'confirm', className: 'btn btn-success', onClick: confirmGenerate }, 'Confirm Generate')
+        ]
+      },
+      React.createElement(
+        'div',
+        { style: { display: 'flex', flexDirection: 'column', gap: '10px' } },
+        React.createElement('p', null, React.createElement('strong', null, 'Employee: '), generateModal.employeeName),
+        React.createElement('p', null, React.createElement('strong', null, 'Net Salary: '), `$${generateModal.netSalary}`),
+        generateModal.status === 'Paid' ? React.createElement('p', null, 'This payslip has already been processed and paid.') : React.createElement('p', null, 'Are you sure you want to generate the payslip for this employee?')
+      )
+    )
   );
 };
 
