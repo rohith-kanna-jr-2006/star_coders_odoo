@@ -5,8 +5,10 @@ import FilterBar from '../../components/admin/FilterBar';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
 import { notify } from '../../components/admin/Notification';
+import { useAuth } from '../../context/AuthContext';
 
 const Employees = () => {
+  const { user } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState('');
   const [department, setDepartment] = useState('');
@@ -24,6 +26,10 @@ const Employees = () => {
       setError(null);
       const res = await getEmployees(search);
       let data = res.data || [];
+
+      if (user?.role === 'hr' && user?.department) {
+        data = data.filter(e => (e.department || '').toLowerCase() === String(user.department).toLowerCase());
+      }
       
       // Client-side filtering since mock service might only handle search
       if (department) {

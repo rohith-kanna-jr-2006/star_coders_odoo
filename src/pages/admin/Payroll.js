@@ -4,8 +4,10 @@ import FilterBar from '../../components/admin/FilterBar';
 import StatusBadge from '../../components/admin/StatusBadge';
 import Modal from '../../components/admin/Modal';
 import { notify } from '../../components/admin/Notification';
+import { useAuth } from '../../context/AuthContext';
 
 const Payroll = () => {
+  const { user } = useAuth();
   const [records, setRecords] = useState([]);
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -22,6 +24,10 @@ const Payroll = () => {
       setError(null);
       const res = await getPayrolls();
       let data = res.data || [];
+
+      if (user?.role === 'hr' && user?.department) {
+        data = data.filter(r => (r.department || r.user?.department || '').toLowerCase() === String(user.department).toLowerCase());
+      }
       
       if (search) {
         data = data.filter(r => (r.employeeName || '').toLowerCase().includes(search.toLowerCase()) || r.employeeId.includes(search));

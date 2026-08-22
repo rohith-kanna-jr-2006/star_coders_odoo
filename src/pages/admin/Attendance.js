@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { getAttendance } from '../../services/attendanceService';
 import FilterBar from '../../components/admin/FilterBar';
 import StatusBadge from '../../components/admin/StatusBadge';
+import { useAuth } from '../../context/AuthContext';
 
 const Attendance = () => {
+  const { user } = useAuth();
   const [date, setDate] = useState('2026-08-22');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
@@ -21,6 +23,10 @@ const Attendance = () => {
       // We pass search to employeeId for now
       const res = await getAttendance(date, search, status);
       let data = res.data || [];
+
+      if (user?.role === 'hr' && user?.department) {
+        data = data.filter(r => (r.department || '').toLowerCase() === String(user.department).toLowerCase());
+      }
       
       // Client-side filter for department if available in records
       // Note: Mock data might not have department for attendance, but we handle if it does.
