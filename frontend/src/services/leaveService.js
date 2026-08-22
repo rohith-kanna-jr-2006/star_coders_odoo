@@ -2,7 +2,7 @@ import api, { ENDPOINTS } from './api'
 
 /**
  * Fetches all leave requests and history for the authenticated employee
- * @returns {Promise<Object>} List of leave requests
+ * @returns List of leave requests
  */
 export const getLeaves = async () => {
   const response = await api.get(ENDPOINTS.LEAVES.GET)
@@ -12,7 +12,7 @@ export const getLeaves = async () => {
 /**
  * Submits a new leave request
  * @param {{ leaveType: string, startDate: string, endDate: string, remarks?: string }} details
- * @returns {Promise<Object>} Submitted leave details
+ * @returns Submitted leave details
  */
 export const applyLeave = async (details) => {
   const response = await api.post(ENDPOINTS.LEAVES.APPLY, details)
