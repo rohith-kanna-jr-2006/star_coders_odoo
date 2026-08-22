@@ -15,6 +15,8 @@ const LeaveRequests = () => {
   const [error, setError] = useState(null);
   
   const [actionModal, setActionModal] = useState(null);
+  const [actionComment, setActionComment] = useState('');
+  const [actionError, setActionError] = useState('');
 
   const fetchRequests = async () => {
     try {
@@ -56,17 +58,23 @@ const LeaveRequests = () => {
 
   const handleActionClick = (req, newStatus) => {
     setActionModal({ request: req, newStatus });
+    setActionComment('');
+    setActionError('');
   };
 
   const confirmAction = async () => {
     if (!actionModal) return;
+    if (actionModal.newStatus === 'Rejected' && !actionComment.trim()) {
+      setActionError('Rejection reason is required.');
+      return;
+    }
     try {
-      await updateLeaveStatus(actionModal.request.id, actionModal.newStatus);
+      await updateLeaveStatus(actionModal.request._id || actionModal.request.id, actionModal.newStatus, actionComment);
       notify(`Leave request ${actionModal.newStatus.toLowerCase()} successfully`, 'success');
       setActionModal(null);
       fetchRequests(); // Refresh data
     } catch (err) {
-      notify('Failed to update leave status', 'error');
+      notify('Unable to update leave request.', 'error');
     }
   };
 
@@ -134,7 +142,6 @@ const LeaveRequests = () => {
             React.createElement(
               'tr',
               null,
-              React.createElement('th', null, 'ID'),
               React.createElement('th', null, 'Employee Name'),
               React.createElement('th', null, 'Leave Type'),
               React.createElement('th', null, 'From'),
@@ -150,12 +157,11 @@ const LeaveRequests = () => {
             requests.map(req =>
               React.createElement(
                 'tr',
-                { key: req.id },
-                React.createElement('td', null, req.id),
-                React.createElement('td', null, req.employeeName),
+                { key: req._id || req.id },
+                React.createElement('td', null, req.employeeName || req.user?.name),
                 React.createElement('td', null, req.leaveType),
-                React.createElement('td', null, req.from),
-                React.createElement('td', null, req.to),
+                React.createElement('td', null, req.startDate || req.from),
+                React.createElement('td', null, req.endDate || req.to),
                 React.createElement('td', null, req.reason),
                 React.createElement('td', null, React.createElement(StatusBadge, { status: req.status })),
                 React.createElement(
@@ -178,14 +184,39 @@ const LeaveRequests = () => {
     actionModal && React.createElement(
       Modal,
       {
-        title: `Confirm ${actionModal.newStatus}`,
+        title: actionModal.newStatus === 'Approved' ? 'Approve Leave Request' : 'Reject Leave Request',
         onClose: () => setActionModal(null),
         footer: [
           React.createElement('button', { key: 'cancel', className: 'btn btn-secondary', onClick: () => setActionModal(null) }, 'Cancel'),
-          React.createElement('button', { key: 'confirm', className: actionModal.newStatus === 'Approved' ? 'btn btn-success' : 'btn btn-danger', onClick: confirmAction }, 'Confirm')
+          React.createElement('button', { key: 'confirm', className: actionModal.newStatus === 'Approved' ? 'btn btn-success' : 'btn btn-danger', onClick: confirmAction }, actionModal.newStatus === 'Approved' ? 'Approve' : 'Reject')
         ]
       },
-      React.createElement('p', null, `Are you sure you want to ${actionModal.newStatus.toLowerCase()} the leave request from ${actionModal.request.employeeName}?`)
+      React.createElement(
+        'div',
+        { style: { display: 'flex', flexDirection: 'column', gap: '15px' } },
+        React.createElement(
+          'div',
+          null,
+          React.createElement('p', { style: { margin: '0 0 5px 0' } }, React.createElement('strong', null, 'Employee: '), actionModal.request.employeeName || actionModal.request.user?.name),
+          React.createElement('p', { style: { margin: '0 0 5px 0' } }, React.createElement('strong', null, 'Type: '), actionModal.request.leaveType),
+          React.createElement('p', { style: { margin: '0 0 5px 0' } }, React.createElement('strong', null, 'Dates: '), `${actionModal.request.startDate || actionModal.request.from} to ${actionModal.request.endDate || actionModal.request.to}`)
+        ),
+        React.createElement(
+          'div',
+          { className: 'form-group' },
+          React.createElement('label', null, actionModal.newStatus === 'Approved' ? 'Comment (Optional):' : 'Reason (Required):'),
+          React.createElement('textarea', {
+            className: 'form-control',
+            style: { width: '100%', minHeight: '80px', marginTop: '5px' },
+            value: actionComment,
+            onChange: e => {
+              setActionComment(e.target.value);
+              if (e.target.value.trim()) setActionError('');
+            }
+          }),
+          actionError && React.createElement('p', { style: { color: 'red', fontSize: '14px', marginTop: '5px' } }, actionError)
+        )
+      )
     )
   );
 };
