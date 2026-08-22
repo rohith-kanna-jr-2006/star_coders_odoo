@@ -66,6 +66,20 @@ export const signup = async (req, res, next) => {
       })
     }
 
+    if (assignedRole === 'employee' && !designation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Employee Type (designation) is required for Employees.',
+      })
+    }
+
+    if (assignedRole === 'hr' && !department) {
+      return res.status(400).json({
+        success: false,
+        message: 'Department is required for HR.',
+      })
+    }
+
     const picture = profilePictureUrl || profilePicture || ''
 
     // 5. Create user record (Password hashing handled automatically by User pre-save hook)
