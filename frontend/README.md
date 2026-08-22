@@ -76,30 +76,30 @@ frontend/
 │
 ├── src/
 │   ├── components/
-│   │   ├── EmployeeLayout.jsx   # Layout shell linking Navbar + Sidebar + Scrim
-│   │   ├── ErrorMessage.jsx     # Reusable alert box with retry button
-│   │   ├── Loading.jsx          # Accessible spinner loading state
-│   │   ├── Modal.jsx            # Modal dialog component
-│   │   ├── Navbar.jsx           # Top navigation bar with user chip & logout
-│   │   ├── PageHeader.jsx       # Standardized page title, eyebrow, and actions
-│   │   ├── ProtectedRoute.jsx   # Route guard checking authentication state
-│   │   ├── Sidebar.jsx          # Responsive navigation sidebar
-│   │   └── StatusBadge.jsx      # Multi-state badge (Present, Leave, Pending, etc.)
+│   │   ├── EmployeeLayout.js    # Layout shell linking Navbar + Sidebar + Scrim
+│   │   ├── ErrorMessage.js      # Reusable alert box with retry button
+│   │   ├── Loading.js           # Accessible spinner loading state
+│   │   ├── Modal.js             # Modal dialog component
+│   │   ├── Navbar.js            # Top navigation bar with user chip & logout
+│   │   ├── PageHeader.js        # Standardized page title, eyebrow, and actions
+│   │   ├── ProtectedRoute.js    # Route guard checking authentication state
+│   │   ├── Sidebar.js           # Responsive navigation sidebar
+│   │   └── StatusBadge.js       # Multi-state badge (Present, Leave, Pending, etc.)
 │   │
 │   ├── context/
-│   │   └── AuthContext.jsx      # Central auth provider (user, login, logout, token)
+│   │   └── AuthContext.js       # Central auth provider (user, login, logout, token)
 │   │
 │   ├── pages/
 │   │   ├── auth/
-│   │   │   ├── Login.jsx        # Employee sign-in page
-│   │   │   └── Signup.jsx       # Employee registration page
+│   │   │   ├── Login.js         # Employee sign-in page
+│   │   │   └── Signup.js        # Employee registration page
 │   │   │
 │   │   └── employee/
-│   │       ├── Attendance.jsx   # Check-in/out, daily table, weekly schedule
-│   │       ├── Dashboard.jsx    # Welcome metrics, quick links, attendance pulse
-│   │       ├── Leave.jsx         # Leave application form, status badges, history
-│   │       ├── Payroll.jsx       # Read-only salary breakdown & net pay
-│   │       └── Profile.jsx       # Personal profile, editable fields & job details
+│   │       ├── Attendance.js    # Check-in/out, daily table, weekly schedule
+│   │       ├── Dashboard.js     # Welcome metrics, quick links, attendance pulse
+│   │       ├── Leave.js         # Leave application form, status badges, history
+│   │       ├── Payroll.js       # Read-only salary breakdown & net pay
+│   │       └── Profile.js       # Personal profile, editable fields & job details
 │   │
 │   ├── services/
 │   │   ├── api.js               # Central Axios instance & ENDPOINTS dictionary
@@ -109,9 +109,9 @@ frontend/
 │   │   ├── payrollService.js    # Payroll data fetcher
 │   │   └── profileService.js    # Profile retrieval and update APIs
 │   │
-│   ├── App.jsx                  # Main router definitions
+│   ├── App.js                   # Main router definitions
 │   ├── index.css                # Global design system & responsive styling
-│   └── main.jsx                 # React root bootstrap
+│   └── main.js                  # React root bootstrap
 │
 ├── .env.example                 # Example environment configuration
 ├── package.json
