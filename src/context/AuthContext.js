@@ -1,6 +1,4 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { mockUser } from '../services/mockData';
-
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {

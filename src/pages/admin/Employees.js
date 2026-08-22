@@ -170,7 +170,9 @@ const Employees = () => {
         onClose: () => setSelectedEmp(null),
         footer: [
           React.createElement('button', { key: 'close', className: 'btn btn-secondary', onClick: () => setSelectedEmp(null) }, 'Close'),
-          React.createElement('button', { key: 'payroll', className: 'btn btn-primary', onClick: () => navigate(`/admin/payroll`) }, 'View Payroll')
+          React.createElement('button', { key: 'attendance', className: 'btn btn-info', onClick: () => navigate(`/admin/attendance?employeeId=${selectedEmp.id}`) }, 'Attendance'),
+          React.createElement('button', { key: 'leave', className: 'btn btn-info', onClick: () => navigate(`/admin/leaves?employeeId=${selectedEmp.id}`) }, 'Leaves'),
+          React.createElement('button', { key: 'payroll', className: 'btn btn-primary', onClick: () => navigate(`/admin/payroll?employeeId=${selectedEmp.id}`) }, 'Payroll')
         ]
       },
       React.createElement(

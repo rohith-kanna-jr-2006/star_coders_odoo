@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { Send } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
@@ -169,7 +169,7 @@ export default function Leave() {
     className: "table-scroll"
   }, /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Type"), /*#__PURE__*/React.createElement("th", null, "From"), /*#__PURE__*/React.createElement("th", null, "To"), /*#__PURE__*/React.createElement("th", null, "Status"))), /*#__PURE__*/React.createElement("tbody", null, leaves.length ? leaves.map((leave, index) => /*#__PURE__*/React.createElement("tr", {
     key: leave._id || leave.id || index
-  }, /*#__PURE__*/React.createElement("td", null, leave.leaveType || leave.type || 'â€”'), /*#__PURE__*/React.createElement("td", null, leave.startDate || leave.from || 'â€”'), /*#__PURE__*/React.createElement("td", null, leave.endDate || leave.to || 'â€”'), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusBadge, {
+  }, /*#__PURE__*/React.createElement("td", null, leave.leaveType || leave.type || '-'), /*#__PURE__*/React.createElement("td", null, leave.startDate || leave.from || '-'), /*#__PURE__*/React.createElement("td", null, leave.endDate || leave.to || '-'), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusBadge, {
     status: leave.status
   })))) : /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
     colSpan: "4",

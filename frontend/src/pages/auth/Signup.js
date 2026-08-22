@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -52,7 +52,7 @@ export default function Signup() {
     className: "auth-quote"
   }, /*#__PURE__*/React.createElement("div", {
     className: "eyebrow"
-  }, "A BETTER WORKDAY"), /*#__PURE__*/React.createElement("h1", null, "Make space for the work that matters."), /*#__PURE__*/React.createElement("p", null, "Join your teamâ€™s single source of truth for the everyday details.")), /*#__PURE__*/React.createElement("div", {
+  }, "A BETTER WORKDAY"), /*#__PURE__*/React.createElement("h1", null, "Make space for the work that matters."), /*#__PURE__*/React.createElement("p", null, "Join your team's single source of truth for the everyday details.")), /*#__PURE__*/React.createElement("div", {
     className: "auth-aside-footer"
   }, "Employee workspace Â· Secure access")), /*#__PURE__*/React.createElement("main", {
     className: "auth-panel"

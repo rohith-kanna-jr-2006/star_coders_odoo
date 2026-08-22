@@ -1,7 +1,7 @@
 import api from './api'
 
-export const login = async (credentials) => (await api.post('/auth/login', credentials)).data
-export const signup = async (details) => (await api.post('/auth/signup', details)).data
+export const login = async (credentials) => (await api.post('/auth/login', credentials)).data.data
+export const signup = async (details) => (await api.post('/auth/signup', details)).data.data
 export const logout = () => {
 	localStorage.removeItem('dayflow_token')
 	localStorage.removeItem('dayflow_user')

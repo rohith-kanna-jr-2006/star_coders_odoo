@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { Save, UserRound } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
@@ -141,7 +141,7 @@ export default function Profile() {
     className: "detail-list"
   }, readOnly.map(([label, value]) => /*#__PURE__*/React.createElement("div", {
     key: label
-  }, /*#__PURE__*/React.createElement("span", null, label), /*#__PURE__*/React.createElement("strong", null, value || 'â€”')))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, label), /*#__PURE__*/React.createElement("strong", null, value || '-')))), /*#__PURE__*/React.createElement("div", {
     className: "eyebrow profile-label"
   }, "SALARY"), /*#__PURE__*/React.createElement("div", {
     className: "salary-readonly"

@@ -1,5 +1,5 @@
 import api from './api';
-import { mockEmployees } from './mockData';
+import { mockEmployees } from './mock/mockEmployees';
 
 export const getEmployees = async (search = '') => {
   return new Promise((resolve) => {
