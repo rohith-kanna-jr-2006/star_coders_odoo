@@ -1,12 +1,13 @@
-export default function PageHeader({ eyebrow, title, description, action }) {
-  return (
-    <div className="page-header">
-      <div className="page-header-content">
-        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
-        <h1 className="page-title">{title}</h1>
-        {description && <p className="page-description">{description}</p>}
-      </div>
-      {action && <div className="page-header-action">{action}</div>}
-    </div>
-  )
+﻿import React from 'react';
+export default function PageHeader({
+  eyebrow,
+  title,
+  description,
+  action
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "page-header"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "eyebrow"
+  }, eyebrow), /*#__PURE__*/React.createElement("h1", null, title), description && /*#__PURE__*/React.createElement("p", null, description)), action);
 }

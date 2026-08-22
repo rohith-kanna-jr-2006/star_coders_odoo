@@ -1,41 +1,33 @@
-import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
-import Sidebar from './Sidebar'
-import Navbar from './Navbar'
-import { useAuth } from '../context/AuthContext'
-
+﻿import React from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import Sidebar from './Sidebar';
+import Navbar from './Navbar';
+import { useAuth } from '../context/AuthContext';
 export default function EmployeeLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { logout } = useAuth()
-  const navigate = useNavigate()
-
+  const [open, setOpen] = useState(false);
+  const {
+    logout
+  } = useAuth();
+  const navigate = useNavigate();
   const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
-
-  return (
-    <div className="app-shell">
-      <Sidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        onLogout={handleLogout}
-      />
-      
-      {sidebarOpen && (
-        <div
-          className="sidebar-scrim"
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      <div className="app-main">
-        <Navbar onMenu={() => setSidebarOpen(true)} />
-        <main className="page-content">
-          <Outlet />
-        </main>
-      </div>
-    </div>
-  )
+    logout();
+    navigate('/login');
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    className: "app-shell"
+  }, /*#__PURE__*/React.createElement(Sidebar, {
+    open: open,
+    onClose: () => setOpen(false),
+    onLogout: handleLogout
+  }), open && /*#__PURE__*/React.createElement("div", {
+    className: "sidebar-scrim",
+    onClick: () => setOpen(false)
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "app-main"
+  }, /*#__PURE__*/React.createElement(Navbar, {
+    onMenu: () => setOpen(true)
+  }), /*#__PURE__*/React.createElement("main", {
+    className: "page-content"
+  }, /*#__PURE__*/React.createElement(Outlet, null))));
 }

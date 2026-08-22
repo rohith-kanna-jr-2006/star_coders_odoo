@@ -1,229 +1,118 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import {
-  ArrowUpRight,
-  CalendarCheck,
-  Clock3,
-  FileText,
-  UserRound,
-  CircleDollarSign,
-  Briefcase,
-  Layers,
-} from 'lucide-react'
-import PageHeader from '../../components/PageHeader'
-import StatusBadge from '../../components/StatusBadge'
-import Loading from '../../components/Loading'
-import ErrorMessage from '../../components/ErrorMessage'
-import { useAuth } from '../../context/AuthContext'
-import { getAttendance } from '../../services/attendanceService'
-import { getLeaves } from '../../services/leaveService'
-import { getApiError } from '../../services/api'
-
-// Helper to unwrap flexible backend response shapes
-const unwrap = (result, key) =>
-  result?.[key] || result?.data?.[key] || result?.data || result || []
-
+﻿import React from 'react';
+import { useEffect, useState } from 'react';
+import { ArrowUpRight, CalendarCheck, Clock3, FileText, UserRound } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import PageHeader from '../../components/PageHeader';
+import StatusBadge from '../../components/StatusBadge';
+import Loading from '../../components/Loading';
+import ErrorMessage from '../../components/ErrorMessage';
+import { useAuth } from '../../context/AuthContext';
+import { getAttendance } from '../../services/attendanceService';
+import { getLeaves } from '../../services/leaveService';
+import { getApiError } from '../../services/api';
+const unwrap = (result, key) => result?.[key] || result?.data?.[key] || result?.data || result || [];
 export default function Dashboard() {
-  const { user } = useAuth()
-  const [data, setData] = useState({ attendance: null, leaves: [] })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  const fetchDashboardData = async () => {
-    setLoading(true)
-    setError('')
+  const {
+    user
+  } = useAuth();
+  const [data, setData] = useState({
+    attendance: null,
+    leaves: []
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const load = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const [attendanceRes, leavesRes] = await Promise.allSettled([
-        getAttendance(),
-        getLeaves(),
-      ])
-
-      const attendanceData =
-        attendanceRes.status === 'fulfilled'
-          ? unwrap(attendanceRes.value, 'today') || unwrap(attendanceRes.value, 'attendance')
-          : null
-
-      const leavesData =
-        leavesRes.status === 'fulfilled'
-          ? unwrap(leavesRes.value, 'leaves')
-          : []
-
+      const [attendance, leaves] = await Promise.all([getAttendance(), getLeaves()]);
       setData({
-        attendance: attendanceData,
-        leaves: Array.isArray(leavesData) ? leavesData : [],
-      })
+        attendance: unwrap(attendance, 'today') || unwrap(attendance, 'attendance'),
+        leaves: unwrap(leaves, 'leaves')
+      });
     } catch (err) {
-      setError(getApiError(err))
+      setError(getApiError(err));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
+  };
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
-
-  const employeeName = user?.name || user?.fullName || user?.email?.split('@')[0] || 'Employee'
-  const firstName = employeeName.split(' ')[0]
-  const today = data.attendance || {}
-
-  // Compute leave stats safely from received backend data
-  const leaveList = Array.isArray(data.leaves) ? data.leaves : []
-  const pendingLeaves = leaveList.filter(
-    (l) => String(l.status || '').toLowerCase() === 'pending'
-  ).length
-  const approvedLeaves = leaveList.filter(
-    (l) => String(l.status || '').toLowerCase() === 'approved'
-  ).length
-
-  return (
-    <>
-      <PageHeader
-        eyebrow="OVERVIEW"
-        title={`Welcome back, ${firstName}`}
-        description="Here is the summary of your daily attendance, leave activity, and quick access tools."
-      />
-
-      {loading ? (
-        <Loading label="Loading your dashboard workspace..." />
-      ) : error ? (
-        <ErrorMessage message={error} onRetry={fetchDashboardData} />
-      ) : (
-        <>
-          {/* Employee Identity & Quick Metrics Bar */}
-          <section className="metric-grid">
-            <div className="metric-card accent">
-              <div className="metric-icon">
-                <Clock3 size={20} />
-              </div>
-              <span className="metric-label">Today's Attendance</span>
-              <strong className="metric-value">{today.status || 'Not Recorded'}</strong>
-              <small className="metric-subtext">
-                {today.checkIn || today.checkInTime
-                  ? `In: ${today.checkIn || today.checkInTime}`
-                  : 'No check-in recorded today'}
-              </small>
-            </div>
-
-            <div className="metric-card">
-              <div className="metric-icon green">
-                <CalendarCheck size={20} />
-              </div>
-              <span className="metric-label">Leave Status</span>
-              <strong className="metric-value">{pendingLeaves} Pending</strong>
-              <small className="metric-subtext">
-                {approvedLeaves > 0 ? `${approvedLeaves} approved this cycle` : 'All requests up to date'}
-              </small>
-            </div>
-
-            <div className="metric-card">
-              <div className="metric-icon blue">
-                <Briefcase size={20} />
-              </div>
-              <span className="metric-label">Employee ID / Dept</span>
-              <strong className="metric-value">{user?.employeeId || user?.id || 'EMP-Active'}</strong>
-              <small className="metric-subtext">
-                {user?.department || user?.designation || 'Active Member'}
-              </small>
-            </div>
-          </section>
-
-          {/* Quick Actions and Attendance Pulse Grid */}
-          <section className="dashboard-grid">
-            {/* Quick Actions Card */}
-            <div className="section-card">
-              <div className="card-heading">
-                <div>
-                  <div className="eyebrow">QUICK ACTIONS</div>
-                  <h2 className="card-title">Employee Actions</h2>
-                </div>
-              </div>
-
-              <div className="quick-links">
-                <Link to="/employee/profile" className="quick-link-item">
-                  <div className="quick-link-icon-wrap">
-                    <UserRound size={18} />
-                  </div>
-                  <div className="quick-link-info">
-                    <span className="quick-link-title">My Profile</span>
-                    <small>View & edit contact details</small>
-                  </div>
-                  <ArrowUpRight size={17} className="quick-link-arrow" />
-                </Link>
-
-                <Link to="/employee/attendance" className="quick-link-item">
-                  <div className="quick-link-icon-wrap">
-                    <Clock3 size={18} />
-                  </div>
-                  <div className="quick-link-info">
-                    <span className="quick-link-title">Attendance</span>
-                    <small>Check in, check out, & logs</small>
-                  </div>
-                  <ArrowUpRight size={17} className="quick-link-arrow" />
-                </Link>
-
-                <Link to="/employee/leave" className="quick-link-item">
-                  <div className="quick-link-icon-wrap">
-                    <FileText size={18} />
-                  </div>
-                  <div className="quick-link-info">
-                    <span className="quick-link-title">Leave Portal</span>
-                    <small>Apply for time off & history</small>
-                  </div>
-                  <ArrowUpRight size={17} className="quick-link-arrow" />
-                </Link>
-
-                <Link to="/employee/payroll" className="quick-link-item">
-                  <div className="quick-link-icon-wrap">
-                    <CircleDollarSign size={18} />
-                  </div>
-                  <div className="quick-link-info">
-                    <span className="quick-link-title">Payroll</span>
-                    <small>Salary details & payslips</small>
-                  </div>
-                  <ArrowUpRight size={17} className="quick-link-arrow" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Today's Attendance Pulse Card */}
-            <div className="section-card">
-              <div className="card-heading">
-                <div>
-                  <div className="eyebrow">TODAY'S ACTIVITY</div>
-                  <h2 className="card-title">Attendance Pulse</h2>
-                </div>
-                <StatusBadge status={today.status || 'Not Recorded'} />
-              </div>
-
-              <div className="time-row">
-                <div>
-                  <span>Check-in</span>
-                  <strong>{today.checkIn || today.checkInTime || '—'}</strong>
-                </div>
-                <div>
-                  <span>Check-out</span>
-                  <strong>{today.checkOut || today.checkOutTime || '—'}</strong>
-                </div>
-                <div>
-                  <span>Working Hours</span>
-                  <strong>{today.workingHours || today.hours || '—'}</strong>
-                </div>
-              </div>
-
-              <div className="dashboard-pulse-footer">
-                <p className="muted small-note">
-                  Official timestamps are securely recorded and synchronized with HR logs.
-                </p>
-                <Link className="card-link" to="/employee/attendance">
-                  <span>Open Full Attendance Tracker</span>
-                  <ArrowUpRight size={15} />
-                </Link>
-              </div>
-            </div>
-          </section>
-        </>
-      )}
-    </>
-  )
+    load();
+  }, []);
+  const today = data.attendance || {};
+  const name = user?.name || user?.fullName || 'there';
+  const pending = data.leaves.filter(leave => String(leave.status).toLowerCase() === 'pending').length;
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(PageHeader, {
+    eyebrow: "OVERVIEW",
+    title: `Good morning, ${name.split(' ')[0]}.`,
+    description: "Hereâ€™s the shape of your workday."
+  }), loading ? /*#__PURE__*/React.createElement(Loading, {
+    label: "Loading your workspace..."
+  }) : error ? /*#__PURE__*/React.createElement(ErrorMessage, {
+    message: error,
+    onRetry: load
+  }) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("section", {
+    className: "metric-grid"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "metric-card accent"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "metric-icon"
+  }, /*#__PURE__*/React.createElement(Clock3, {
+    size: 19
+  })), /*#__PURE__*/React.createElement("span", null, "Todayâ€™s status"), /*#__PURE__*/React.createElement("strong", null, today.status || 'Not recorded'), /*#__PURE__*/React.createElement("small", null, today.checkIn || today.checkInTime ? `In at ${today.checkIn || today.checkInTime}` : 'No check-in yet')), /*#__PURE__*/React.createElement("div", {
+    className: "metric-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "metric-icon green"
+  }, /*#__PURE__*/React.createElement(CalendarCheck, {
+    size: 19
+  })), /*#__PURE__*/React.createElement("span", null, "Leave requests"), /*#__PURE__*/React.createElement("strong", null, pending), /*#__PURE__*/React.createElement("small", null, "Pending review")), /*#__PURE__*/React.createElement("div", {
+    className: "metric-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "metric-icon blue"
+  }, /*#__PURE__*/React.createElement(UserRound, {
+    size: 19
+  })), /*#__PURE__*/React.createElement("span", null, "Employee ID"), /*#__PURE__*/React.createElement("strong", null, user?.employeeId || user?.id || 'â€”'), /*#__PURE__*/React.createElement("small", null, "Active employee"))), /*#__PURE__*/React.createElement("section", {
+    className: "dashboard-grid"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "section-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-heading"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "eyebrow"
+  }, "QUICK ACCESS"), /*#__PURE__*/React.createElement("h2", null, "Keep moving"))), /*#__PURE__*/React.createElement("div", {
+    className: "quick-links"
+  }, /*#__PURE__*/React.createElement(Link, {
+    to: "/employee/profile"
+  }, /*#__PURE__*/React.createElement(UserRound, {
+    size: 20
+  }), /*#__PURE__*/React.createElement("span", null, "Profile", /*#__PURE__*/React.createElement("small", null, "Personal details")), /*#__PURE__*/React.createElement(ArrowUpRight, {
+    size: 17
+  })), /*#__PURE__*/React.createElement(Link, {
+    to: "/employee/attendance"
+  }, /*#__PURE__*/React.createElement(Clock3, {
+    size: 20
+  }), /*#__PURE__*/React.createElement("span", null, "Attendance", /*#__PURE__*/React.createElement("small", null, "Track your hours")), /*#__PURE__*/React.createElement(ArrowUpRight, {
+    size: 17
+  })), /*#__PURE__*/React.createElement(Link, {
+    to: "/employee/leave"
+  }, /*#__PURE__*/React.createElement(FileText, {
+    size: 20
+  }), /*#__PURE__*/React.createElement("span", null, "Leave", /*#__PURE__*/React.createElement("small", null, pending ? `${pending} request pending` : 'Plan time away')), /*#__PURE__*/React.createElement(ArrowUpRight, {
+    size: 17
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "section-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-heading"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "eyebrow"
+  }, "TODAY"), /*#__PURE__*/React.createElement("h2", null, "Attendance pulse")), /*#__PURE__*/React.createElement(StatusBadge, {
+    status: today.status || 'Not recorded'
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "time-row"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Check-in"), /*#__PURE__*/React.createElement("strong", null, today.checkIn || today.checkInTime || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Check-out"), /*#__PURE__*/React.createElement("strong", null, today.checkOut || today.checkOutTime || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, "Hours"), /*#__PURE__*/React.createElement("strong", null, today.workingHours || today.hours || 'â€”'))), /*#__PURE__*/React.createElement(Link, {
+    className: "card-link",
+    to: "/employee/attendance"
+  }, "Open attendance ", /*#__PURE__*/React.createElement(ArrowUpRight, {
+    size: 15
+  }))))));
 }

@@ -1,289 +1,135 @@
-import { useEffect, useState } from 'react'
-import {
-  CalendarDays,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
-  LogOut as CheckOutIcon,
-  RotateCcw,
-} from 'lucide-react'
-import PageHeader from '../../components/PageHeader'
-import Loading from '../../components/Loading'
-import ErrorMessage from '../../components/ErrorMessage'
-import StatusBadge from '../../components/StatusBadge'
-import { checkIn, checkOut, getAttendance } from '../../services/attendanceService'
-import { getApiError } from '../../services/api'
-
-// Helper to unwrap nested response payloads
-const unwrap = (result, key) =>
-  result?.[key] || result?.data?.[key] || result?.data || result || []
-
+﻿import React from 'react';
+import { useEffect, useState } from 'react';
+import { CalendarDays, Check, ChevronLeft, ChevronRight, Clock3 } from 'lucide-react';
+import PageHeader from '../../components/PageHeader';
+import Loading from '../../components/Loading';
+import ErrorMessage from '../../components/ErrorMessage';
+import StatusBadge from '../../components/StatusBadge';
+import { checkIn, checkOut, getAttendance } from '../../services/attendanceService';
+import { getApiError } from '../../services/api';
+const unwrap = (result, key) => result?.[key] || result?.data?.[key] || result?.data || result || [];
 export default function Attendance() {
-  const [attendanceData, setAttendanceData] = useState(null)
-  const [weeklyRecords, setWeeklyRecords] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState('')
-  const [error, setError] = useState('')
-  const [feedbackMessage, setFeedbackMessage] = useState('')
-  const [weekOffset, setWeekOffset] = useState(0) // 0: current week, -1: prev week, +1: next week
-
-  const fetchAttendanceRecords = async () => {
-    setLoading(true)
-    setError('')
+  const [data, setData] = useState(null);
+  const [week, setWeek] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [action, setAction] = useState('');
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const load = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const result = await getAttendance({ weekOffset })
-      const todayRecord = unwrap(result, 'today') || {}
-      const weeklyList = unwrap(result, 'weekly') || unwrap(result, 'week') || []
-      const dailyList = unwrap(result, 'daily') || unwrap(result, 'records') || []
-
-      setAttendanceData({
-        ...todayRecord,
-        daily: Array.isArray(dailyList) ? dailyList : [],
-      })
-      setWeeklyRecords(Array.isArray(weeklyList) ? weeklyList : [])
+      const result = await getAttendance();
+      setData(unwrap(result, 'today') || {});
+      setWeek(unwrap(result, 'weekly') || unwrap(result, 'week') || []);
     } catch (err) {
-      setError(getApiError(err))
+      setError(getApiError(err));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
+  };
   useEffect(() => {
-    fetchAttendanceRecords()
-  }, [weekOffset])
-
-  const handleCheckIn = async () => {
-    setActionLoading('check-in')
-    setError('')
-    setFeedbackMessage('')
-
+    load();
+  }, []);
+  const act = async type => {
+    setAction(type);
+    setMessage('');
     try {
-      await checkIn()
-      setFeedbackMessage('Check-in successful.')
-      await fetchAttendanceRecords()
+      await (type === 'in' ? checkIn() : checkOut());
+      setMessage(type === 'in' ? 'Check-in successful.' : 'Check-out successful.');
+      await load();
     } catch (err) {
-      setError(getApiError(err))
+      setError(getApiError(err));
     } finally {
-      setActionLoading('')
+      setAction('');
     }
-  }
-
-  const handleCheckOut = async () => {
-    setActionLoading('check-out')
-    setError('')
-    setFeedbackMessage('')
-
-    try {
-      await checkOut()
-      setFeedbackMessage('Check-out successful.')
-      await fetchAttendanceRecords()
-    } catch (err) {
-      setError(getApiError(err))
-    } finally {
-      setActionLoading('')
-    }
-  }
-
-  if (loading && !attendanceData) {
-    return <Loading label="Loading attendance details..." />
-  }
-
-  if (error && !attendanceData) {
-    return <ErrorMessage message={error} onRetry={fetchAttendanceRecords} />
-  }
-
-  const today = attendanceData || {}
-  const hasCheckedIn = Boolean(today.checkIn || today.checkInTime)
-  const hasCheckedOut = Boolean(today.checkOut || today.checkOutTime)
-
-  // Daily records list
-  const dailyRows = Array.isArray(today.daily)
-    ? today.daily
-    : Array.isArray(attendanceData)
-    ? attendanceData
-    : []
-
-  const formattedTodayDate =
-    today.date ||
-    new Date().toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-
-  const getWeekLabel = () => {
-    if (weekOffset === 0) return 'Current Week'
-    if (weekOffset === -1) return 'Previous Week'
-    if (weekOffset === 1) return 'Next Week'
-    return weekOffset < 0 ? `${Math.abs(weekOffset)} Weeks Ago` : `In ${weekOffset} Weeks`
-  }
-
-  return (
-    <>
-      <PageHeader
-        eyebrow="TIME & ATTENDANCE"
-        title="Attendance & Time Tracking"
-        description="Record your daily check-in, review shift logs, and inspect weekly attendance patterns."
-      />
-
-      {/* Today's Attendance Overview Hero */}
-      <section className="attendance-hero">
-        <div className="attendance-hero-info">
-          <div className="eyebrow">TODAY'S ATTENDANCE</div>
-          <h2>{formattedTodayDate}</h2>
-          <div className="attendance-status-row">
-            <StatusBadge status={today.status || (hasCheckedIn ? 'Present' : 'Not Recorded')} />
-            {(today.workingHours || today.hours) && (
-              <span className="working-hours-pill">
-                {today.workingHours || today.hours} total recorded
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div className="attendance-actions">
-          {feedbackMessage && <div className="form-success compact">{feedbackMessage}</div>}
-          {error && <div className="form-error compact">{error}</div>}
-
-          <div className="action-buttons-group">
-            <button
-              className="primary-button"
-              disabled={hasCheckedIn || Boolean(actionLoading)}
-              onClick={handleCheckIn}
-            >
-              {actionLoading === 'check-in' ? (
-                'Checking in...'
-              ) : (
-                <>
-                  <Check size={16} />
-                  <span>Check In</span>
-                </>
-              )}
-            </button>
-
-            <button
-              className="secondary-button"
-              disabled={!hasCheckedIn || hasCheckedOut || Boolean(actionLoading)}
-              onClick={handleCheckOut}
-            >
-              {actionLoading === 'check-out' ? (
-                'Checking out...'
-              ) : (
-                <>
-                  <CheckOutIcon size={16} />
-                  <span>Check Out</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Today's Metrics Bar */}
-      <section className="time-row large-time">
-        <div>
-          <span className="time-label">
-            <Clock3 size={15} /> Check-In Time
-          </span>
-          <strong className="time-value">{today.checkIn || today.checkInTime || '—'}</strong>
-        </div>
-        <div>
-          <span className="time-label">
-            <Clock3 size={15} /> Check-Out Time
-          </span>
-          <strong className="time-value">{today.checkOut || today.checkOutTime || '—'}</strong>
-        </div>
-        <div>
-          <span className="time-label">
-            <CalendarDays size={15} /> Working Hours
-          </span>
-          <strong className="time-value">{today.workingHours || today.hours || '—'}</strong>
-        </div>
-      </section>
-
-      {/* Daily Attendance Records Table */}
-      <section className="section-card">
-        <div className="card-heading">
-          <div>
-            <div className="eyebrow">DAILY LOGS</div>
-            <h2 className="card-title">Daily Attendance History</h2>
-          </div>
-          <div className="week-controls">
-            <button
-              className="icon-button"
-              onClick={() => setWeekOffset((prev) => prev - 1)}
-              aria-label="Previous week"
-              title="Previous week"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <span className="current-week-tag">{getWeekLabel()}</span>
-            <button
-              className="icon-button"
-              onClick={() => setWeekOffset((prev) => prev + 1)}
-              aria-label="Next week"
-              title="Next week"
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-        </div>
-
-        <div className="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Check-in</th>
-                <th>Check-out</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dailyRows.length > 0 ? (
-                dailyRows.map((row, index) => (
-                  <tr key={row._id || row.id || index}>
-                    <td>{row.date || row.day || '—'}</td>
-                    <td>{row.checkIn || row.checkInTime || '—'}</td>
-                    <td>{row.checkOut || row.checkOutTime || '—'}</td>
-                    <td>
-                      <StatusBadge status={row.status || 'Present'} />
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="empty-cell">
-                    No attendance records found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Weekly View Grid */}
-      <section className="section-card mt-4">
-        <div className="eyebrow">WEEKLY SUMMARY</div>
-        <h2 className="card-title">Weekly Attendance Breakdown</h2>
-        <div className="week-grid">
-          {weeklyRecords.length > 0 ? (
-            weeklyRecords.map((day, index) => (
-              <div key={day.date || index} className="week-day-card">
-                <span className="week-day-title">{day.day || day.name || day.date}</span>
-                <StatusBadge status={day.status || 'Not Recorded'} />
-                {day.hours && <small className="muted">{day.hours} worked</small>}
-              </div>
-            ))
-          ) : (
-            <p className="muted empty-state-note">
-              No weekly summary records found for this period.
-            </p>
-          )}
-        </div>
-      </section>
-    </>
-  )
+  };
+  if (loading) return /*#__PURE__*/React.createElement(Loading, {
+    label: "Loading attendance..."
+  });
+  if (error && !data) return /*#__PURE__*/React.createElement(ErrorMessage, {
+    message: error,
+    onRetry: load
+  });
+  const rows = Array.isArray(data?.daily) ? data.daily : Array.isArray(data) ? data : data?.records || [];
+  const canIn = !data?.checkIn && !data?.checkInTime;
+  const canOut = !data?.checkOut && !data?.checkOutTime && !canIn;
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(PageHeader, {
+    eyebrow: "TIME & ATTENDANCE",
+    title: "Attendance",
+    description: "Keep an accurate pulse on your workday."
+  }), /*#__PURE__*/React.createElement("section", {
+    className: "attendance-hero"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "eyebrow"
+  }, "TODAYâ€™S ATTENDANCE"), /*#__PURE__*/React.createElement("h2", null, data?.date || new Date().toLocaleDateString()), /*#__PURE__*/React.createElement("div", {
+    className: "attendance-status"
+  }, /*#__PURE__*/React.createElement(StatusBadge, {
+    status: data?.status || 'Not recorded'
+  }), data?.workingHours || data?.hours ? /*#__PURE__*/React.createElement("span", null, data.workingHours || data.hours, " worked") : null)), /*#__PURE__*/React.createElement("div", {
+    className: "attendance-actions"
+  }, message && /*#__PURE__*/React.createElement("span", {
+    className: "form-success compact"
+  }, "âœ“ ", message), error && /*#__PURE__*/React.createElement("span", {
+    className: "form-error compact"
+  }, error), /*#__PURE__*/React.createElement("button", {
+    className: "primary-button",
+    disabled: !canIn || action,
+    onClick: () => act('in')
+  }, action === 'in' ? 'Checking in...' : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(Check, {
+    size: 16
+  }), " Check in")), /*#__PURE__*/React.createElement("button", {
+    className: "secondary-button",
+    disabled: !canOut || action,
+    onClick: () => act('out')
+  }, action === 'out' ? 'Checking out...' : 'Check out'))), /*#__PURE__*/React.createElement("section", {
+    className: "time-row large-time"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement(Clock3, {
+    size: 14
+  }), " Check-in"), /*#__PURE__*/React.createElement("strong", null, data?.checkIn || data?.checkInTime || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement(Clock3, {
+    size: 14
+  }), " Check-out"), /*#__PURE__*/React.createElement("strong", null, data?.checkOut || data?.checkOutTime || 'â€”')), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement(CalendarDays, {
+    size: 14
+  }), " Working hours"), /*#__PURE__*/React.createElement("strong", null, data?.workingHours || data?.hours || 'â€”'))), /*#__PURE__*/React.createElement("section", {
+    className: "section-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "card-heading"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "eyebrow"
+  }, "HISTORY"), /*#__PURE__*/React.createElement("h2", null, "Daily attendance")), /*#__PURE__*/React.createElement("div", {
+    className: "week-controls"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "icon-button",
+    "aria-label": "Previous week"
+  }, /*#__PURE__*/React.createElement(ChevronLeft, {
+    size: 17
+  })), /*#__PURE__*/React.createElement("span", null, "Current week"), /*#__PURE__*/React.createElement("button", {
+    className: "icon-button",
+    "aria-label": "Next week"
+  }, /*#__PURE__*/React.createElement(ChevronRight, {
+    size: 17
+  })))), /*#__PURE__*/React.createElement("div", {
+    className: "table-scroll"
+  }, /*#__PURE__*/React.createElement("table", null, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Date"), /*#__PURE__*/React.createElement("th", null, "Check-in"), /*#__PURE__*/React.createElement("th", null, "Check-out"), /*#__PURE__*/React.createElement("th", null, "Status"))), /*#__PURE__*/React.createElement("tbody", null, rows.length ? rows.map((row, index) => /*#__PURE__*/React.createElement("tr", {
+    key: row._id || row.id || index
+  }, /*#__PURE__*/React.createElement("td", null, row.date || row.day || 'â€”'), /*#__PURE__*/React.createElement("td", null, row.checkIn || row.checkInTime || 'â€”'), /*#__PURE__*/React.createElement("td", null, row.checkOut || row.checkOutTime || 'â€”'), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(StatusBadge, {
+    status: row.status
+  })))) : /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    colSpan: "4",
+    className: "empty-cell"
+  }, "No attendance records returned.")))))), /*#__PURE__*/React.createElement("section", {
+    className: "section-card"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "eyebrow"
+  }, "WEEKLY VIEW"), /*#__PURE__*/React.createElement("h2", {
+    className: "card-title"
+  }, "This week"), /*#__PURE__*/React.createElement("div", {
+    className: "week-grid"
+  }, week.length ? week.map((day, index) => /*#__PURE__*/React.createElement("div", {
+    key: day.date || index
+  }, /*#__PURE__*/React.createElement("span", null, day.day || day.date), /*#__PURE__*/React.createElement(StatusBadge, {
+    status: day.status
+  }))) : /*#__PURE__*/React.createElement("p", {
+    className: "muted"
+  }, "Weekly attendance will appear when the backend returns it."))));
 }

@@ -1,11 +1,9 @@
-export default function StatusBadge({ status }) {
-  const normalized = String(status || 'Unknown').trim()
-  const classKey = normalized.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-
-  return (
-    <span className={`status-badge status-${classKey}`}>
-      <span className="status-dot" aria-hidden="true" />
-      {normalized}
-    </span>
-  )
+﻿import React from 'react';
+export default function StatusBadge({
+  status
+}) {
+  const value = String(status || 'Unknown');
+  return /*#__PURE__*/React.createElement("span", {
+    className: `status status-${value.toLowerCase().replace(/[^a-z]+/g, '-')}`
+  }, value);
 }

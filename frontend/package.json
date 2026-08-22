@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
     "@tailwindcss/postcss": "latest",
+    "@vitejs/plugin-react": "latest",
     "axios": "latest",
     "lucide-react": "latest",
     "react": "latest",
@@ -18,6 +18,9 @@
     "react-router-dom": "latest"
   },
   "devDependencies": {
+    "@babel/cli": "^8.0.4",
+    "@babel/core": "^8.0.1",
+    "@babel/plugin-transform-react-jsx": "^8.0.1",
     "autoprefixer": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",

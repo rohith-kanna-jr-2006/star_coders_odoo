@@ -1,21 +1,14 @@
-import api, { ENDPOINTS } from './api'
+import api from './api'
 
-/**
- * Authenticates user credentials with backend
- * @param {{ email: string, password: string }} credentials
- * @returns {Promise<Object>} Backend response containing user and token
- */
-export const login = async (credentials) => {
-  const response = await api.post(ENDPOINTS.AUTH.LOGIN, credentials)
-  return response.data
+export const login = async (credentials) => (await api.post('/auth/login', credentials)).data
+export const signup = async (details) => (await api.post('/auth/signup', details)).data
+export const logout = () => {
+	localStorage.removeItem('dayflow_token')
+	localStorage.removeItem('dayflow_user')
 }
-
-/**
- * Registers a new employee account
- * @param {{ employeeId: string, email: string, password: string, role: string }} details
- * @returns {Promise<Object>} Backend confirmation
- */
-export const signup = async (details) => {
-  const response = await api.post(ENDPOINTS.AUTH.SIGNUP, details)
-  return response.data
+export const getToken = () => localStorage.getItem('dayflow_token')
+export const isLoggedIn = () => Boolean(getToken())
+export const getCurrentUser = () => {
+	const saved = localStorage.getItem('dayflow_user')
+	return saved ? JSON.parse(saved) : null
 }

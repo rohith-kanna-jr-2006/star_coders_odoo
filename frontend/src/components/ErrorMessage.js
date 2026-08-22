@@ -1,21 +1,13 @@
-import { AlertCircle, RefreshCw } from 'lucide-react'
-
-export default function ErrorMessage({ message, onRetry }) {
-  return (
-    <div className="error-box" role="alert">
-      <div className="error-icon-wrap">
-        <AlertCircle size={20} className="error-icon" />
-      </div>
-      <div className="error-content">
-        <strong className="error-title">Unable to complete request</strong>
-        <p className="error-message">{message || 'Something went wrong. Please try again.'}</p>
-      </div>
-      {onRetry && (
-        <button className="secondary-button error-retry-btn" onClick={onRetry}>
-          <RefreshCw size={14} />
-          <span>Try Again</span>
-        </button>
-      )}
-    </div>
-  )
+﻿import React from 'react';
+export default function ErrorMessage({
+  message,
+  onRetry
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "error-box",
+    role: "alert"
+  }, /*#__PURE__*/React.createElement("strong", null, "We hit a snag."), /*#__PURE__*/React.createElement("span", null, message), onRetry && /*#__PURE__*/React.createElement("button", {
+    className: "text-button",
+    onClick: onRetry
+  }, "Try again"));
 }
