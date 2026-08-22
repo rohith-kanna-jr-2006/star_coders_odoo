@@ -7,12 +7,9 @@ import AdminLayout from './components/AdminLayout';
 import Login from './pages/auth/Login';
 import Dashboard from './pages/admin/Dashboard';
 import Employees from './pages/admin/Employees';
-import EmployeeDetails from './pages/admin/EmployeeDetails';
 import Attendance from './pages/admin/Attendance';
 import LeaveRequests from './pages/admin/LeaveRequests';
-import LeaveDetails from './pages/admin/LeaveDetails';
 import Payroll from './pages/admin/Payroll';
-import PayrollDetails from './pages/admin/PayrollDetails';
 
 // Placeholder for Employee (Member 1) module
 const EmployeeDashboard = () => React.createElement(
@@ -46,12 +43,9 @@ function App() {
         React.createElement(Route, { index: true, element: React.createElement(Navigate, { to: '/admin/dashboard', replace: true }) }),
         React.createElement(Route, { path: 'dashboard', element: React.createElement(Dashboard, null) }),
         React.createElement(Route, { path: 'employees', element: React.createElement(Employees, null) }),
-        React.createElement(Route, { path: 'employees/:id', element: React.createElement(EmployeeDetails, null) }),
         React.createElement(Route, { path: 'attendance', element: React.createElement(Attendance, null) }),
         React.createElement(Route, { path: 'leave', element: React.createElement(LeaveRequests, null) }),
-        React.createElement(Route, { path: 'leave/:id', element: React.createElement(LeaveDetails, null) }),
-        React.createElement(Route, { path: 'payroll', element: React.createElement(Payroll, null) }),
-        React.createElement(Route, { path: 'payroll/:employeeId', element: React.createElement(PayrollDetails, null) })
+        React.createElement(Route, { path: 'payroll', element: React.createElement(Payroll, null) })
       ),
 
       // Employee Routes (Member 1)

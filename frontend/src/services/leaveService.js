@@ -1,3 +1,20 @@
-import api from './api'
-export const getLeaves = async () => (await api.get('/leaves')).data
-export const applyLeave = async (details) => (await api.post('/leaves', details)).data
+import api, { ENDPOINTS } from './api'
+
+/**
+ * Fetches all leave requests and history for the authenticated employee
+ * @returns {Promise<Object>} List of leave requests
+ */
+export const getLeaves = async () => {
+  const response = await api.get(ENDPOINTS.LEAVES.GET)
+  return response.data
+}
+
+/**
+ * Submits a new leave request
+ * @param {{ leaveType: string, startDate: string, endDate: string, remarks?: string }} details
+ * @returns {Promise<Object>} Submitted leave details
+ */
+export const applyLeave = async (details) => {
+  const response = await api.post(ENDPOINTS.LEAVES.APPLY, details)
+  return response.data
+}

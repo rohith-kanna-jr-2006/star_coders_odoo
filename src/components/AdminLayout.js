@@ -2,11 +2,13 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import AdminSidebar from './Sidebar/AdminSidebar';
 import AdminNavbar from './Navbar/AdminNavbar';
+import Notification from './admin/Notification';
 
 const AdminLayout = () => {
   return React.createElement(
     'div',
     { className: 'admin-layout' },
+    React.createElement(Notification, null),
     React.createElement(AdminSidebar, null),
     React.createElement(
       'div',
